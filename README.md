@@ -176,7 +176,7 @@ The graph will be stopped and if the timeout timer of current node will be stopp
 
 ## Generate a Mermaid State Diagram
 
-After you have spawned a graph, you can get a Mermaid.js state diagram for it.
+After you have spawned a graph, you can get a [Mermaid.js](https://mermaid.js.org/) state diagram for it.
 
 ```elixir
   EcspanseStateMachine.Api.as_mermaid_diagram(graph_entity)
@@ -184,7 +184,7 @@ After you have spawned a graph, you can get a Mermaid.js state diagram for it.
 
 Here's an example output.
 
-```mermaid
+```
 ---
 title: battle_babae8bc-f0bc-4451-a568-da123ee2caa7
 ---
