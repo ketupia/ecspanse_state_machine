@@ -4,6 +4,8 @@
 
 `ECSpanse State Machine` is a state machine implementation for [`ECSpanse`](https://hexdocs.pm/ecspanse).
 
+![Mermaid Chart](https://github.com/ketupia/ecspanse_state_machine/blob/127356360085810df51a5574f8d2a637002891d1/priv/static/images/sample_mermaid_chart.png)
+
 <!-- MDOC !-->
 
 ## Features
