@@ -15,7 +15,13 @@ end
 
 defimpl EcspanseStateMachine.Mermaid, for: EcspanseStateMachine.Components.Node do
   def to_state_diagram(node) do
-    Enum.map_join(node.allowed_exit_node_names, "\n", &encode_transition(node, &1))
+    to_state_diagram(node, node.allowed_exit_node_names)
+  end
+
+  def to_state_diagram(node, []), do: "  #{node.name} --> [*]"
+
+  def to_state_diagram(node, allowed_exit_node_names) do
+    Enum.map_join(allowed_exit_node_names, "\n", &encode_transition(node, &1))
   end
 
   defp encode_transition(node, exit_node_name) do

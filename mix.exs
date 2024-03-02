@@ -3,7 +3,7 @@ defmodule EcspanseStateMachine.MixProject do
 
   @name "ECSpanse State Machine"
   @version "0.1.0"
-  @description "A State Machine for ECSpanse"
+  @description "A State Machine for ECSpanse, an Entity Component System for Elixir"
 
   def project do
     [

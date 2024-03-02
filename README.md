@@ -10,7 +10,7 @@
 
 - Graph validation
 - Node timeout
--
+- Mermaid state diagram generation
 
 ## Installation
 
