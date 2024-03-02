@@ -1,4 +1,4 @@
-defmodule EcspanseStateMachine.Events.NodeTransitionRequest do
+defmodule EcspanseStateMachine.Internal.Events.NodeTransitionRequest do
   @moduledoc """
   Requests a node transition
 

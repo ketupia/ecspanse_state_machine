@@ -1,12 +1,12 @@
-defmodule EcspanseStateMachine.Systems.OnNodeTimeout do
+defmodule EcspanseStateMachine.Internal.Systems.OnNodeTimeout do
   @moduledoc """
   Triggers a transition from the current node to the timeout node when a timeout timer elapses
   """
 
-  alias EcspanseStateMachine.Components
-  alias EcspanseStateMachine.Events
-  alias EcspanseStateMachine.Internals.Engine
-  alias EcspanseStateMachine.Internals.Locator
+  alias EcspanseStateMachine.Internal.Components
+  alias EcspanseStateMachine.Internal.Events
+  alias EcspanseStateMachine.Internal.Engine
+  alias EcspanseStateMachine.Internal.Locator
 
   use Ecspanse.System,
     event_subscriptions: [Events.NodeTimeout]

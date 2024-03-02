@@ -1,4 +1,4 @@
-defmodule EcspanseStateMachine.Internals.Locator do
+defmodule EcspanseStateMachine.Internal.Locator do
   @moduledoc """
   Functions to find graphs and nodes by name or reference
   """

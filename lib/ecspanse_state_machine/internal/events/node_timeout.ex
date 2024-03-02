@@ -1,4 +1,4 @@
-defmodule EcspanseStateMachine.Events.NodeTimeout do
+defmodule EcspanseStateMachine.Internal.Events.NodeTimeout do
   @moduledoc """
   This event is triggered when a Timeout Timer elapses.
   """

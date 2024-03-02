@@ -1,4 +1,4 @@
-defmodule EcspanseStateMachine.Components.Node do
+defmodule EcspanseStateMachine.Internal.Components.Node do
   @moduledoc """
   A state in the graph
 

@@ -1,4 +1,4 @@
-defmodule EcspanseStateMachine.Internals.GraphValidator do
+defmodule EcspanseStateMachine.Internal.GraphValidator do
   @moduledoc """
   Validates a graph
   * all nodes must exist
@@ -6,6 +6,7 @@ defmodule EcspanseStateMachine.Internals.GraphValidator do
   * all exit nodes must exist
   * all nodes must be reachable
   """
+  alias EcspanseStateMachine.Internal.Components
   @spec validate(Components.Graph.t()) :: :ok | {:error, String.t()}
   def validate(graph_component) do
     graph_entity = Ecspanse.Query.get_component_entity(graph_component)

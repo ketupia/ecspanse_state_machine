@@ -1,4 +1,4 @@
-defmodule EcspanseStateMachine.Events.StartGraphRequest do
+defmodule EcspanseStateMachine.Internal.Events.StartGraphRequest do
   @moduledoc """
   Emitted to start a graph processing.
   When the graph starts, a transition into the start_node

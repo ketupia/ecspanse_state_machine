@@ -2,7 +2,7 @@ defmodule EcspanseStateMachine.Manager do
   @moduledoc """
   Call `setup` to configure the state machine systems.
   """
-  alias EcspanseStateMachine.Systems
+  alias EcspanseStateMachine.Internal.Systems
   use Ecspanse
 
   @impl Ecspanse

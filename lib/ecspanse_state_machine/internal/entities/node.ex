@@ -1,8 +1,8 @@
-defmodule EcspanseStateMachine.Entities.Node do
+defmodule EcspanseStateMachine.Internal.Entities.Node do
   @moduledoc """
   entity_spec's for nodes
   """
-  alias EcspanseStateMachine.Components
+  alias EcspanseStateMachine.Internal.Components
 
   @spec blueprint(Ecspanse.Entity.t(), atom(), list(atom)) :: Ecspanse.Entity.entity_spec()
   @doc """

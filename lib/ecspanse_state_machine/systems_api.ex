@@ -2,8 +2,8 @@ defmodule EcspanseStateMachine.SystemsApi do
   @moduledoc """
   The Api to use from other Ecspanse systems
   """
-  alias EcspanseStateMachine.Components
-  alias EcspanseStateMachine.Entities
+  alias EcspanseStateMachine.Internal.Components
+  alias EcspanseStateMachine.Internal.Entities
 
   @spec spawn_graph(atom(), atom(), any()) :: {:ok, Ecspanse.Entity.t()}
   @doc """

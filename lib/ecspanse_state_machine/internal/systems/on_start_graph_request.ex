@@ -1,10 +1,10 @@
-defmodule EcspanseStateMachine.Systems.OnStartGraphRequest do
+defmodule EcspanseStateMachine.Internal.Systems.OnStartGraphRequest do
   @moduledoc """
   Starts the graph unless it is already running
   """
-  alias EcspanseStateMachine.Events
-  alias EcspanseStateMachine.Internals.Locator
-  alias EcspanseStateMachine.Internals.Engine
+  alias EcspanseStateMachine.Internal.Events
+  alias EcspanseStateMachine.Internal.Locator
+  alias EcspanseStateMachine.Internal.Engine
 
   use Ecspanse.System, event_subscriptions: [Events.StartGraphRequest]
 

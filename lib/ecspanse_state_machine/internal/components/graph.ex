@@ -1,4 +1,4 @@
-defmodule EcspanseStateMachine.Components.Graph do
+defmodule EcspanseStateMachine.Internal.Components.Graph do
   @moduledoc """
   The `container` for a collection of nodes
 

@@ -1,11 +1,11 @@
-defmodule EcspanseStateMachine.Systems.OnNodeTransitionRequest do
+defmodule EcspanseStateMachine.Internal.Systems.OnNodeTransitionRequest do
   @moduledoc """
   transitions from the current node to the target node when a transition request event is received
   """
 
-  alias EcspanseStateMachine.Internals.Locator
-  alias EcspanseStateMachine.Internals.Engine
-  alias EcspanseStateMachine.Events
+  alias EcspanseStateMachine.Internal.Locator
+  alias EcspanseStateMachine.Internal.Engine
+  alias EcspanseStateMachine.Internal.Events
 
   use Ecspanse.System,
     event_subscriptions: [Events.NodeTransitionRequest]

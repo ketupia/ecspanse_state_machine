@@ -1,8 +1,8 @@
-defmodule EcspanseStateMachine.Components.NodeTimeoutTimer do
+defmodule EcspanseStateMachine.Internal.Components.NodeTimeoutTimer do
   @moduledoc """
   The timer component for nodes that have a timeout
   """
-  alias EcspanseStateMachine.Events
+  alias EcspanseStateMachine.Internal.Events
 
   use Ecspanse.Template.Component.Timer,
     state: [

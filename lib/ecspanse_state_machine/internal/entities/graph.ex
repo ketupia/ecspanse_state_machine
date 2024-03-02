@@ -1,8 +1,8 @@
-defmodule EcspanseStateMachine.Entities.Graph do
+defmodule EcspanseStateMachine.Internal.Entities.Graph do
   @moduledoc """
   entity_spec of a graph
   """
-  alias EcspanseStateMachine.Components
+  alias EcspanseStateMachine.Internal.Components
 
   @spec blueprint(atom(), atom()) :: Ecspanse.Entity.entity_spec()
   @doc """

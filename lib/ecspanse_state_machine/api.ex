@@ -2,11 +2,11 @@ defmodule EcspanseStateMachine.Api do
   @moduledoc """
   Functions to assist reading the state of the machine
   """
-  alias EcspanseStateMachine.Components
-  alias EcspanseStateMachine.Mermaid
-  alias EcspanseStateMachine.Events
+  alias EcspanseStateMachine.Internal.Components
+  alias EcspanseStateMachine.Internal.Mermaid
+  alias EcspanseStateMachine.Internal.Events
   alias EcspanseStateMachine.Projections
-  alias EcspanseStateMachine.Internals.Locator
+  alias EcspanseStateMachine.Internal.Locator
 
   @spec as_mermaid_diagram(Ecspanse.Entity.id() | Ecspanse.Entity.t()) ::
           {:ok, String.t()} | {:error, :not_found}
@@ -20,7 +20,7 @@ defmodule EcspanseStateMachine.Api do
   end
 
   def as_mermaid_diagram(graph_entity) do
-    with {:ok, graph_component} <- EcspanseStateMachine.Components.Graph.fetch(graph_entity) do
+    with {:ok, graph_component} <- Components.Graph.fetch(graph_entity) do
       nodes = Locator.get_nodes(graph_component)
 
       [

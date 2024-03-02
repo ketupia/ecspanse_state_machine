@@ -2,7 +2,7 @@ defmodule EcspanseStateMachine.Projections.Node do
   @moduledoc """
   The projection for a node
   """
-  alias EcspanseStateMachine.Components
+  alias EcspanseStateMachine.Internal.Components
 
   use Ecspanse.Projection,
     fields: [

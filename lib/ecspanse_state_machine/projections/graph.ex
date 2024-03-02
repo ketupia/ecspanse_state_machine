@@ -2,8 +2,8 @@ defmodule EcspanseStateMachine.Projections.Graph do
   @moduledoc """
   The projection for a graph
   """
-  alias EcspanseStateMachine.Internals.Locator
-  alias EcspanseStateMachine.Components
+  alias EcspanseStateMachine.Internal.Locator
+  alias EcspanseStateMachine.Internal.Components
 
   use Ecspanse.Projection,
     fields: [

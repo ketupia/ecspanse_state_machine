@@ -1,11 +1,10 @@
-defmodule EcspanseStateMachine.Internals.Engine do
+defmodule EcspanseStateMachine.Internal.Engine do
   @moduledoc """
   This is the core logic for the operations of the state machine.
   """
-  alias EcspanseStateMachine.Components
-  alias EcspanseStateMachine.Events
-  alias EcspanseStateMachine.Internals.GraphValidator
-  alias EcspanseStateMachine.Internals.Locator
+  alias EcspanseStateMachine.Internal.Components
+  alias EcspanseStateMachine.Internal.GraphValidator
+  alias EcspanseStateMachine.Internal.Locator
 
   @spec maybe_start_graph(Components.Graph.t()) :: :ok
   @doc """
@@ -19,7 +18,7 @@ defmodule EcspanseStateMachine.Internals.Engine do
           start_graph(graph_component)
 
         {:error, reason} ->
-          Ecspanse.event(Events.InvalidGraph,
+          Ecspanse.event(EcspanseStateMachine.Events.InvalidGraph,
             graph_name: graph_component.name,
             graph_reference: graph_component.reference,
             reason: reason
@@ -37,7 +36,7 @@ defmodule EcspanseStateMachine.Internals.Engine do
     graph_component = Locator.get_graph_component_by_name(graph_component.name)
 
     Ecspanse.event(
-      {Events.GraphStarted,
+      {EcspanseStateMachine.Events.GraphStarted,
        [graph_name: graph_component.name, graph_reference: graph_component.reference]}
     )
 
@@ -130,7 +129,7 @@ defmodule EcspanseStateMachine.Internals.Engine do
       end
 
     Ecspanse.event(
-      {Events.NodeTransition,
+      {EcspanseStateMachine.Events.NodeTransition,
        [
          graph_name: graph_component.name,
          graph_reference: graph_component.reference,
