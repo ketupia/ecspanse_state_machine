@@ -80,19 +80,19 @@ defmodule EcspanseStateMachine.Internals.Engine do
     end
   end
 
-  @spec maybe_transition_nodes(Components.Graph.t(), Components.Node.t(), atom()) ::
+  @spec maybe_transition_nodes(
+          Components.Graph.t(),
+          Components.Node.t(),
+          Components.Node.t(),
+          atom()
+        ) ::
           :ok | {:error, :not_running | :invalid_exit}
   @doc """
   Will transition nodes if the graph is running and the next node is allowed from the current node
   """
-  def maybe_transition_nodes(graph_component, next_node_component, reason) do
-    if graph_component.is_running do
-      current_node_component =
-        case graph_component.current_node_name do
-          nil -> nil
-          current_node_name -> Locator.get_node_component(graph_component, current_node_name)
-        end
-
+  def maybe_transition_nodes(graph_component, current_node_component, next_node_component, reason) do
+    if graph_component.is_running and
+         current_node_component.name == graph_component.current_node_name do
       is_allowed_exit =
         case current_node_component do
           nil ->

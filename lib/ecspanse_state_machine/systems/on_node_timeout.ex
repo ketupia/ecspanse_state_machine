@@ -17,7 +17,12 @@ defmodule EcspanseStateMachine.Systems.OnNodeTimeout do
          {:ok, graph_component} <- Locator.fetch_graph_component_for_node(node_component),
          {:ok, timeout_node_component} <-
            Locator.fetch_node_component(graph_component, node_component.timeout_node_name) do
-      Engine.maybe_transition_nodes(graph_component, timeout_node_component, :timeout)
+      Engine.maybe_transition_nodes(
+        graph_component,
+        node_component,
+        timeout_node_component,
+        :timeout
+      )
     end
   end
 end

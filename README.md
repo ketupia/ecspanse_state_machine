@@ -105,17 +105,27 @@ The `ECSpanse State Machine Api` exposes functions to request a graph start, req
 
 #### Start your graph
 
+Once you have spawned your graph and it's nodes, you set the state machine in motion by issuing a start graph request. The graph will transition into the starting node.
+
 ```elixir
   EcspanseStateMachine.Api.submit_start_graph_request(graph_entity)
 ```
 
 #### Request a node transition
 
+Node transitions happen when a node has a timeout and the timeout elapses or upon request. Submitting a request will cause the graph to transition from the current node to the target node.
+
+The request will be executed so long as the graph is running, the current node is the same, and the target node is in the list of allowed exit states from the current node.
+
 ```elixir
-  EcspanseStateMachine.Api.submit_node_transition_request(graph_entity, :decision_phase)
+  EcspanseStateMachine.Api.submit_node_transition_request(graph_entity, :turn_start, :decision_phase)
 ```
 
+In this example, :turn_start is the current node name and :decision_phase is the target node name.
+
 #### Generate a Mermaid State Diagram
+
+as_mermaid_diagram will produce the source code for a Mermaid State Diagram.
 
 ```elixir
   EcspanseStateMachine.Api.as_mermaid_diagram(graph_entity)
