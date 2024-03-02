@@ -2,15 +2,25 @@ defmodule EcspanseStateMachine.Api do
   @moduledoc """
   Functions to assist reading the state of the machine
   """
+  alias EcspanseStateMachine.Components
   alias EcspanseStateMachine.Mermaid
   alias EcspanseStateMachine.Events
   alias EcspanseStateMachine.Projections
   alias EcspanseStateMachine.Internals.Locator
 
-  @spec as_mermaid_diagram(Ecspanse.Entity.id()) :: {:ok, String.t()} | {:error, :not_found}
-  def as_mermaid_diagram(entity_id) do
-    with {:ok, graph_entity} <- Ecspanse.Entity.fetch(entity_id),
-         {:ok, graph_component} <- EcspanseStateMachine.Components.Graph.fetch(graph_entity) do
+  @spec as_mermaid_diagram(Ecspanse.Entity.id() | Ecspanse.Entity.t()) ::
+          {:ok, String.t()} | {:error, :not_found}
+  @doc """
+  Generates the source for a Mermaid State Diagram
+  """
+  def as_mermaid_diagram(graph_entity_id) when is_binary(graph_entity_id) do
+    with {:ok, graph_entity} <- Ecspanse.Entity.fetch(graph_entity_id) do
+      as_mermaid_diagram(graph_entity)
+    end
+  end
+
+  def as_mermaid_diagram(graph_entity) do
+    with {:ok, graph_component} <- EcspanseStateMachine.Components.Graph.fetch(graph_entity) do
       nodes = Locator.get_nodes(graph_component)
 
       [
@@ -21,66 +31,54 @@ defmodule EcspanseStateMachine.Api do
     end
   end
 
-  @spec fetch_graph(atom() | Ecspanse.Entity.id()) ::
+  @spec project(Ecspanse.Entity.id() | Ecspanse.Entity.t()) ::
           {:ok, Projections.Graph.t()} | {:error, :not_found}
   @doc """
-  Retrieves a graph by name or entity_id
+  Retrieves the projection of the graph
   """
-  def fetch_graph(graph_name) when is_atom(graph_name) do
-    case Locator.fetch_graph_component_by_name(graph_name) do
-      {:ok, graph_component} ->
-        graph_entity = Ecspanse.Query.get_component_entity(graph_component)
-        Projections.Graph.project(%{entity_id: graph_entity.id})
-
-      error ->
-        error
-    end
-  end
-
-  def fetch_graph(graph_entity_id) do
+  def project(graph_entity_id) when is_binary(graph_entity_id) do
     Projections.Graph.project(%{entity_id: graph_entity_id})
   end
 
-  @spec fetch_node(atom(), atom()) :: {:ok, Projections.Graph.t()} | {:error, :not_found}
+  def project(graph_entity) do
+    project(graph_entity.id)
+  end
+
+  @spec submit_start_graph_request(Ecspanse.Entity.id() | Ecspanse.Entity.t()) ::
+          :ok | {:error, :not_found}
   @doc """
-  Retrieves the node in a graph
+  Submits a request to start the graph running
   """
-  def fetch_node(graph_name, node_name) do
-    with {:ok, graph_component} <- Locator.fetch_graph_component_by_name(graph_name),
-         {:ok, node_component} <- Locator.fetch_node_component(graph_component, node_name) do
-      node_entity = Ecspanse.Query.get_component_entity(node_component)
-      Projections.Node.project(%{entity_id: node_entity.id})
+  def submit_start_graph_request(graph_entity_id) when is_binary(graph_entity_id) do
+    with {:ok, graph_entity} <- Ecspanse.Entity.fetch(graph_entity_id) do
+      submit_start_graph_request(graph_entity)
     end
   end
 
-  @spec submit_start_graph_request(atom()) :: :ok | {:error, :not_found}
-  @doc """
-  Submits a start graph request if the graph exists
-  """
-  def submit_start_graph_request(graph_name) do
-    case Locator.fetch_graph_component_by_name(graph_name) do
-      {:ok, graph_component} ->
-        Ecspanse.event({Events.StartGraphRequest, [graph_name: graph_component.name]})
-
-      error ->
-        error
+  def submit_start_graph_request(graph_entity) do
+    with {:ok, graph_component} <- Components.Graph.fetch(graph_entity) do
+      Ecspanse.event({Events.StartGraphRequest, [graph_name: graph_component.name]})
     end
   end
 
-  @spec submit_node_transition_request(atom(), atom()) :: :ok | {:error, :not_found}
+  @spec submit_node_transition_request(Ecspanse.Entity.id() | Ecspanse.Entity.t(), atom()) ::
+          :ok | {:error, :not_found}
   @doc """
   Submits a request to transition to the target node name
   """
-  def submit_node_transition_request(graph_name, target_node_name) do
-    case Locator.fetch_graph_component_by_name(graph_name) do
-      {:ok, graph_component} ->
-        Ecspanse.event(
-          {Events.NodeTransitionRequest,
-           [graph_name: graph_component.name, target_node_name: target_node_name]}
-        )
+  def submit_node_transition_request(graph_entity_id, target_node_name)
+      when is_binary(graph_entity_id) do
+    with {:ok, graph_entity} <- Ecspanse.Entity.fetch(graph_entity_id) do
+      submit_node_transition_request(graph_entity, target_node_name)
+    end
+  end
 
-      error ->
-        error
+  def submit_node_transition_request(graph_entity, target_node_name) do
+    with {:ok, graph_component} <- Components.Graph.fetch(graph_entity) do
+      Ecspanse.event(
+        {Events.NodeTransitionRequest,
+         [graph_name: graph_component.name, target_node_name: target_node_name]}
+      )
     end
   end
 end
