@@ -183,6 +183,18 @@ The systems api has a function to despawn a graph and it's nodes.
     EcspanseStateMachine.SystemsApi.despawn_graph(graph_entity_id)
 ```
 
+## Validating your graph
+
+If your graph is invalid, it won't start. EcspanseStateMachine will validate your graph and report back errors.
+
+```elixir
+    case EcspanseStateMachine.Api.validate_graph(graph_entity) do
+      :ok -> IO.puts("graph is valid")
+      {:error, :not_found} -> IO.puts("graph not found")
+      {:error, reason} -> IO.puts("invalid :" <> reason)
+    end
+```
+
 ## Generate a Mermaid State Diagram
 
 After you have spawned a graph, you can get a [Mermaid.js](https://mermaid.js.org/) state diagram for it.

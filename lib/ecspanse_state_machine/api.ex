@@ -2,6 +2,7 @@ defmodule EcspanseStateMachine.Api do
   @moduledoc """
   Functions to assist reading the state of the machine
   """
+  alias EcspanseStateMachine.Internal.GraphValidator
   alias EcspanseStateMachine.Internal.Components
   alias EcspanseStateMachine.Internal.Mermaid
   alias EcspanseStateMachine.Internal.Events
@@ -124,5 +125,19 @@ defmodule EcspanseStateMachine.Api do
 
   def project(graph_entity) do
     project(graph_entity.id)
+  end
+
+  @spec validate_graph(Ecspanse.Entity.t() | Ecspanse.Entity.id()) ::
+          :ok | {:error, :not_found} | {:error, String.t()}
+  def validate_graph(graph_entity_id) when is_binary(graph_entity_id) do
+    with {:ok, graph_entity} <- Ecspanse.Entity.fetch(graph_entity_id) do
+      validate_graph(graph_entity)
+    end
+  end
+
+  def validate_graph(graph_entity) do
+    with {:ok, graph_component} <- Components.Graph.fetch(graph_entity) do
+      GraphValidator.validate(graph_component)
+    end
   end
 end
