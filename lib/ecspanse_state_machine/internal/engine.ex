@@ -157,10 +157,6 @@ defmodule EcspanseStateMachine.Internal.Engine do
       stop_timer(current_node_component)
     end
 
-    Ecspanse.Command.update_component!(graph_component,
-      current_node_name: next_node_component.name
-    )
-
     current_node_name =
       case current_node_component do
         nil -> nil
@@ -168,6 +164,12 @@ defmodule EcspanseStateMachine.Internal.Engine do
       end
 
     graph_entity = Ecspanse.Query.get_component_entity(graph_component)
+
+    Ecspanse.Command.update_component!(graph_component,
+      current_node_name: next_node_component.name
+    )
+
+    {:ok, graph_component} = Components.Graph.fetch(graph_entity)
 
     Ecspanse.event(
       {EcspanseStateMachine.Events.NodeTransition,
@@ -181,10 +183,10 @@ defmodule EcspanseStateMachine.Internal.Engine do
        ]}
     )
 
-    start_timer(next_node_component)
-
     if Enum.empty?(next_node_component.allowed_exit_node_names) do
       stop_graph(graph_component)
+    else
+      start_timer(next_node_component)
     end
   end
 end

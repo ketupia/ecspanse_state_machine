@@ -41,6 +41,7 @@ end
 4. [Listen for node transitions](#listen-for-node-transitions)
 5. [Request a node transition](#request-a-node-transition)
 6. [Stopping a graph](#stopping-a-graph)
+7. [Despawning a graph](#despawning-a-graph)
 
 ### Register ESCpanse State Machine Systems
 
@@ -173,6 +174,14 @@ You can stop a graph from running anytime by submitting a stop graph request.
 ```
 
 The graph will be stopped and if the timeout timer of current node will be stopped (provided it has one).
+
+### Despawning a graph
+
+The systems api has a function to despawn a graph and it's nodes.
+
+```elixir
+    EcspanseStateMachine.SystemsApi.despawn_graph(graph_entity_id)
+```
 
 ## Generate a Mermaid State Diagram
 

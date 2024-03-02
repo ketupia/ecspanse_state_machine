@@ -9,11 +9,11 @@ defmodule EcspanseStateMachine.Projections.Graph do
     fields: [
       :entity_id,
       :name,
+      :reference,
       :starting_node_name,
       :is_running,
       :current_node_name,
-      :current_node,
-      :nodes
+      :current_node
     ]
 
   @impl true
@@ -23,11 +23,15 @@ defmodule EcspanseStateMachine.Projections.Graph do
       current_node_map = map_current_node(graph_component)
 
       fields =
-        Map.to_list(graph_component) ++
-          [
-            {:entity_id, entity_id},
-            {:current_node, current_node_map}
-          ]
+        [
+          {:entity_id, graph_entity.id},
+          {:name, graph_component.name},
+          {:reference, graph_component.reference},
+          {:starting_node_name, graph_component.starting_node_name},
+          {:is_running, graph_component.is_running},
+          {:current_node_name, graph_component.current_node_name},
+          {:current_node, current_node_map}
+        ]
 
       # , {:nodes, map_nodes(graph_component)}
 
