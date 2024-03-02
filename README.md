@@ -4,7 +4,7 @@
 
 `ECSpanse State Machine` is a state machine implementation for [`ECSpanse`](https://hexdocs.pm/ecspanse).
 
-<img src="https://github.com/ketupia/ecspanse_state_machine/blob/127356360085810df51a5574f8d2a637002891d1/priv/static/images/sample_mermaid_chart.png" width="300" alt="Sample Mermaid Chart">
+[![](https://mermaid.ink/img/pako:eNp1kEFuwjAQRa9izbLCUkmhRV6w4gYs6yqa2AONiB3kTKpWiDNwF1acpxfoFTqOioJadWN7_vsjff8DuNYTGNBa28g1N2RUhSx3WWGFtKic3tzLMZvNpxrnjwvtcVo8EBUO8cnGYbFjZFrVuE0Y9Ftho1LPdy9K66XiPsVSeOKsjtMAt4kieupKet83EsSoz9P563LK1t9sWHBtkHQYuSslJLrd7cYfOAag6G-dV-2_hFf004SMGY3TAOWHWYUJBEoBay81HrJigV8pkAUjT49pZ8HGo_iw53b9ER0YTj1NoN_7sTcwG2w6On4DXdGPHQ?type=png)](https://mermaid.live/edit#pako:eNp1kEFuwjAQRa9izbLCUkmhRV6w4gYs6yqa2AONiB3kTKpWiDNwF1acpxfoFTqOioJadWN7_vsjff8DuNYTGNBa28g1N2RUhSx3WWGFtKic3tzLMZvNpxrnjwvtcVo8EBUO8cnGYbFjZFrVuE0Y9Ftho1LPdy9K66XiPsVSeOKsjtMAt4kieupKet83EsSoz9P563LK1t9sWHBtkHQYuSslJLrd7cYfOAag6G-dV-2_hFf004SMGY3TAOWHWYUJBEoBay81HrJigV8pkAUjT49pZ8HGo_iw53b9ER0YTj1NoN_7sTcwG2w6On4DXdGPHQ)
 
 <!-- MDOC !-->
 
@@ -35,11 +35,12 @@ end
 
 ## How to use
 
-1. register the state machine's ECSpanse systems
-2. spawn a graph and nodes
-3. start the graph
-4. listen for node transitions
-5. request node transitions
+1. [Register the state machine's ECSpanse systems](#register-escpanse-state-machine-systems)
+2. [Spawn a graph and nodes](#spawn-a-graph-and-nodes)
+3. [Start your graph](#start-your-graph)
+4. [Listen for node transitions](#listen-for-node-transitions)
+5. [Request a node transition](#request-a-node-transition)
+6. [Stopping a graph](#stopping-a-graph)
 
 ### Register ESCpanse State Machine Systems
 
@@ -114,11 +115,7 @@ Here's an example of spawning a node into the graph with a timeout timer. You ca
 
 The first 3 parameters are the same as before. This node is named `:combatants_attack` and there is only one allowed exit node specified `[:combatants_move]`. This node will automatically transition to `:combatants_move` after `:timer.seconds(1)`. The fourth parameter, `:timer.seconds(1)`, is the timer duration and the final parameter, `:combatants_move`, is the timeout node name. The timeout node name must be in the list of allowed exists.
 
-### Interacting with the graph
-
-The `ECSpanse State Machine Api` exposes functions to request a graph start, request a node tranistion, and generate a mermaid graph. This is safe to be called anywhere.
-
-#### Start your graph
+### Start your graph
 
 Once you have spawned your graph and it's nodes, you set the state machine in motion by issuing a start graph request. The graph will transition into the starting node.
 
@@ -126,47 +123,7 @@ Once you have spawned your graph and it's nodes, you set the state machine in mo
   EcspanseStateMachine.Api.submit_start_graph_request(graph_entity)
 ```
 
-#### Request a node transition
-
-Node transitions happen when a node has a timeout and the timeout elapses or upon request. Submitting a request will cause the graph to transition from the current node to the target node.
-
-The request will be executed so long as the graph is running, the current node is the same, and the target node is in the list of allowed exit states from the current node.
-
-```elixir
-  EcspanseStateMachine.Api.submit_node_transition_request(graph_entity, :turn_start, :decision_phase)
-```
-
-In this example, :turn_start is the current node name and :decision_phase is the target node name.
-
-#### Generate a Mermaid State Diagram
-
-as_mermaid_diagram will produce the source code for a Mermaid State Diagram.
-
-```elixir
-  EcspanseStateMachine.Api.as_mermaid_diagram(graph_entity)
-```
-
-Here's an example output.
-
-```mermaid
----
-title: battle_babae8bc-f0bc-4451-a568-da123ee2caa7
----
-stateDiagram-v2
-  [*] --> turn_start
-  turn_start --> grenades_explode: ⏲️
-  grenades_explode --> combatants_attack: ⏲️
-  combatants_attack --> turn_end: ⏲️
-  turn_end --> turn_start
-  turn_end --> battle_end
-  battle_end --> [*]
-```
-
-Which produces the following state diagram when rendered
-
-[![](https://mermaid.ink/img/pako:eNp1kEFuwjAQRa9izbLCUkmhRV6w4gYs6yqa2AONiB3kTKpWiDNwF1acpxfoFTqOioJadWN7_vsjff8DuNYTGNBa28g1N2RUhSx3WWGFtKic3tzLMZvNpxrnjwvtcVo8EBUO8cnGYbFjZFrVuE0Y9Ftho1LPdy9K66XiPsVSeOKsjtMAt4kieupKet83EsSoz9P563LK1t9sWHBtkHQYuSslJLrd7cYfOAag6G-dV-2_hFf004SMGY3TAOWHWYUJBEoBay81HrJigV8pkAUjT49pZ8HGo_iw53b9ER0YTj1NoN_7sTcwG2w6On4DXdGPHQ?type=png)](https://mermaid.live/edit#pako:eNp1kEFuwjAQRa9izbLCUkmhRV6w4gYs6yqa2AONiB3kTKpWiDNwF1acpxfoFTqOioJadWN7_vsjff8DuNYTGNBa28g1N2RUhSx3WWGFtKic3tzLMZvNpxrnjwvtcVo8EBUO8cnGYbFjZFrVuE0Y9Ftho1LPdy9K66XiPsVSeOKsjtMAt4kieupKet83EsSoz9P563LK1t9sWHBtkHQYuSslJLrd7cYfOAag6G-dV-2_hFf004SMGY3TAOWHWYUJBEoBay81HrJigV8pkAUjT49pZ8HGo_iw53b9ER0YTj1NoN_7sTcwG2w6On4DXdGPHQ)
-
-#### React to node transitions
+### Listen for node transitions
 
 You'll create ECSpanse event subscriptions for EcspanseStateMachine.Events.NodeTransition events.
 
@@ -191,7 +148,21 @@ defmodule OnNodeTransition do
 end
 ```
 
-#### Stopping a graph
+### Request a node transition
+
+Node transitions happen when a node has a timeout and the timeout elapses or upon request. Submitting a request will cause the graph to transition from the current node to the target node.
+
+The request will be executed so long as the graph is running, the current node is the same, and the target node is in the list of allowed exit states from the current node.
+
+```elixir
+  EcspanseStateMachine.Api.submit_node_transition_request(graph_entity, :turn_start, :decision_phase)
+```
+
+In this example, :turn_start is the current node name and :decision_phase is the target node name.
+
+<!-- MDOC !-->
+
+### Stopping a graph
 
 The graph will automatically stop when it reaches a node without allowed exit node names.
 
@@ -202,3 +173,31 @@ You can stop a graph from running anytime by submitting a stop graph request.
 ```
 
 The graph will be stopped and if the timeout timer of current node will be stopped (provided it has one).
+
+## Generate a Mermaid State Diagram
+
+After you have spawned a graph, you can get a Mermaid.js state diagram for it.
+
+```elixir
+  EcspanseStateMachine.Api.as_mermaid_diagram(graph_entity)
+```
+
+Here's an example output.
+
+```mermaid
+---
+title: battle_babae8bc-f0bc-4451-a568-da123ee2caa7
+---
+stateDiagram-v2
+  [*] --> turn_start
+  turn_start --> grenades_explode: ⏲️
+  grenades_explode --> combatants_attack: ⏲️
+  combatants_attack --> turn_end: ⏲️
+  turn_end --> turn_start
+  turn_end --> battle_end
+  battle_end --> [*]
+```
+
+Which produces the following state diagram when rendered
+
+[![](https://mermaid.ink/img/pako:eNp1kEFuwjAQRa9izbLCUkmhRV6w4gYs6yqa2AONiB3kTKpWiDNwF1acpxfoFTqOioJadWN7_vsjff8DuNYTGNBa28g1N2RUhSx3WWGFtKic3tzLMZvNpxrnjwvtcVo8EBUO8cnGYbFjZFrVuE0Y9Ftho1LPdy9K66XiPsVSeOKsjtMAt4kieupKet83EsSoz9P563LK1t9sWHBtkHQYuSslJLrd7cYfOAag6G-dV-2_hFf004SMGY3TAOWHWYUJBEoBay81HrJigV8pkAUjT49pZ8HGo_iw53b9ER0YTj1NoN_7sTcwG2w6On4DXdGPHQ?type=png)](https://mermaid.live/edit#pako:eNp1kEFuwjAQRa9izbLCUkmhRV6w4gYs6yqa2AONiB3kTKpWiDNwF1acpxfoFTqOioJadWN7_vsjff8DuNYTGNBa28g1N2RUhSx3WWGFtKic3tzLMZvNpxrnjwvtcVo8EBUO8cnGYbFjZFrVuE0Y9Ftho1LPdy9K66XiPsVSeOKsjtMAt4kieupKet83EsSoz9P563LK1t9sWHBtkHQYuSslJLrd7cYfOAag6G-dV-2_hFf004SMGY3TAOWHWYUJBEoBay81HrJigV8pkAUjT49pZ8HGo_iw53b9ER0YTj1NoN_7sTcwG2w6On4DXdGPHQ)
