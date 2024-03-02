@@ -19,6 +19,7 @@ defmodule EcspanseStateMachine.Internal.Engine do
 
         {:error, reason} ->
           Ecspanse.event(EcspanseStateMachine.Events.InvalidGraph,
+            graph_entity_id: Ecspanse.Query.get_component_entity(graph_component).id,
             graph_name: graph_component.name,
             graph_reference: graph_component.reference,
             reason: reason
@@ -37,13 +38,48 @@ defmodule EcspanseStateMachine.Internal.Engine do
 
     Ecspanse.event(
       {EcspanseStateMachine.Events.GraphStarted,
-       [graph_name: graph_component.name, graph_reference: graph_component.reference]}
+       [
+         graph_entity_id: Ecspanse.Query.get_component_entity(graph_component).id,
+         graph_name: graph_component.name,
+         graph_reference: graph_component.reference
+       ]}
     )
 
     next_node_component =
       Locator.get_node_component(graph_component, graph_component.starting_node_name)
 
     transition_nodes(graph_component, nil, next_node_component, :graph_started)
+  end
+
+  @spec maybe_stop_graph(Components.Graph.t()) :: :ok
+  @doc """
+  Stops the graph if it is running.
+  """
+  def maybe_stop_graph(graph_component) do
+    if graph_component.is_running do
+      stop_graph(graph_component)
+    end
+  end
+
+  @spec stop_graph(Components.Graph.t()) :: :ok
+  defp stop_graph(graph_component) do
+    current_node_component =
+      Locator.get_node_component(graph_component, graph_component.current_node_name)
+
+    stop_timer(current_node_component)
+
+    Ecspanse.Command.update_component!(graph_component,
+      is_running: false
+    )
+
+    Ecspanse.event(
+      {EcspanseStateMachine.Events.GraphStopped,
+       [
+         graph_entity_id: Ecspanse.Query.get_component_entity(graph_component).id,
+         graph_name: graph_component.name,
+         graph_reference: graph_component.reference
+       ]}
+    )
   end
 
   @spec start_timer(Components.Node.t()) :: :ok
@@ -128,9 +164,12 @@ defmodule EcspanseStateMachine.Internal.Engine do
         current_node_component -> current_node_component.name
       end
 
+    graph_entity = Ecspanse.Query.get_component_entity(graph_component)
+
     Ecspanse.event(
       {EcspanseStateMachine.Events.NodeTransition,
        [
+         graph_entity_id: graph_entity.id,
          graph_name: graph_component.name,
          graph_reference: graph_component.reference,
          previous_node_name: current_node_name,
@@ -140,5 +179,9 @@ defmodule EcspanseStateMachine.Internal.Engine do
     )
 
     start_timer(next_node_component)
+
+    if Enum.empty?(next_node_component.allowed_exit_node_names) do
+      stop_graph(graph_component)
+    end
   end
 end

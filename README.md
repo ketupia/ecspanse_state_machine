@@ -10,11 +10,13 @@
 
 ## Features
 
-- Multiple graphs executing simultaneously - create and start
-- Register for Node transition events
+- Multiple graphs executing simultaneously - create, start, and stop independently
 - Graph validation - all nodes defined and reachable
 - Node transitions on request or timeout
+- Register for Node transition events
 - Mermaid state diagram generation
+
+<!-- MDOC !-->
 
 ## Installation
 
@@ -29,7 +31,15 @@ def deps do
 end
 ```
 
+<!-- MDOC !-->
+
 ## How to use
+
+1. register the state machine's ECSpanse systems
+2. spawn a graph and nodes
+3. start the graph
+4. listen for node transitions
+5. request node transitions
 
 ### Register ESCpanse State Machine Systems
 
@@ -38,7 +48,12 @@ As part of your ESCpanse setup, you will have defined a `manager` with a `setup(
 ```elixir
   def setup(data) do
     data
+    # register the state machine's systems
     |> EcspanseStateMachine.Manager.setup()
+
+    # Be sure to register the Ecspanse System Timer!
+    |> Ecspanse.add_frame_end_system(Ecspanse.System.Timer)
+
     # register your systems too
 ```
 
@@ -130,3 +145,60 @@ as_mermaid_diagram will produce the source code for a Mermaid State Diagram.
 ```elixir
   EcspanseStateMachine.Api.as_mermaid_diagram(graph_entity)
 ```
+
+Here's an example output.
+
+```mermaid
+---
+title: battle_babae8bc-f0bc-4451-a568-da123ee2caa7
+---
+stateDiagram-v2
+  [*] --> turn_start
+  turn_start --> grenades_explode: ⏲️
+  grenades_explode --> combatants_attack: ⏲️
+  combatants_attack --> turn_end: ⏲️
+  turn_end --> turn_start
+  turn_end --> battle_end
+  battle_end --> [*]
+```
+
+Which produces the following state diagram when rendered
+
+[![](https://mermaid.ink/img/pako:eNp1kEFuwjAQRa9izbLCUkmhRV6w4gYs6yqa2AONiB3kTKpWiDNwF1acpxfoFTqOioJadWN7_vsjff8DuNYTGNBa28g1N2RUhSx3WWGFtKic3tzLMZvNpxrnjwvtcVo8EBUO8cnGYbFjZFrVuE0Y9Ftho1LPdy9K66XiPsVSeOKsjtMAt4kieupKet83EsSoz9P563LK1t9sWHBtkHQYuSslJLrd7cYfOAag6G-dV-2_hFf004SMGY3TAOWHWYUJBEoBay81HrJigV8pkAUjT49pZ8HGo_iw53b9ER0YTj1NoN_7sTcwG2w6On4DXdGPHQ?type=png)](https://mermaid.live/edit#pako:eNp1kEFuwjAQRa9izbLCUkmhRV6w4gYs6yqa2AONiB3kTKpWiDNwF1acpxfoFTqOioJadWN7_vsjff8DuNYTGNBa28g1N2RUhSx3WWGFtKic3tzLMZvNpxrnjwvtcVo8EBUO8cnGYbFjZFrVuE0Y9Ftho1LPdy9K66XiPsVSeOKsjtMAt4kieupKet83EsSoz9P563LK1t9sWHBtkHQYuSslJLrd7cYfOAag6G-dV-2_hFf004SMGY3TAOWHWYUJBEoBay81HrJigV8pkAUjT49pZ8HGo_iw53b9ER0YTj1NoN_7sTcwG2w6On4DXdGPHQ)
+
+#### React to node transitions
+
+You'll create ECSpanse event subscriptions for EcspanseStateMachine.Events.NodeTransition events.
+
+```elixir
+defmodule OnNodeTransition do
+  use Ecspanse.System,
+    event_subscriptions: [EcspanseStateMachine.Events.NodeTransition]
+
+  def run(
+        %EcspanseStateMachine.Events.NodeTransition{
+          graph_entity_id: graph_entity_id,
+          graph_name: graph_name,
+          graph_reference: graph_reference,
+          previous_node_name: previous_node_name,
+          current_node_name: current_node_name,
+          reason: _reason
+        },
+        _frame
+      ) do
+      # respond to the transition
+  end
+end
+```
+
+#### Stopping a graph
+
+The graph will automatically stop when it reaches a node without allowed exit node names.
+
+You can stop a graph from running anytime by submitting a stop graph request.
+
+```elixir
+  EcspanseStateMachine.Api.submit_stop_graph_request(graph_entity)
+```
+
+The graph will be stopped and if the timeout timer of current node will be stopped (provided it has one).

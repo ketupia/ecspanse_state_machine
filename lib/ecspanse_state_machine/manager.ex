@@ -11,7 +11,6 @@ defmodule EcspanseStateMachine.Manager do
     #
     # system startup
     #
-    # |> Ecspanse.add_startup_system(Ecspanse.System.Timer)
 
     #
     # frame start
@@ -19,6 +18,7 @@ defmodule EcspanseStateMachine.Manager do
     |> Ecspanse.add_frame_start_system(Systems.OnNodeTimeout)
     |> Ecspanse.add_frame_start_system(Systems.OnNodeTransitionRequest)
     |> Ecspanse.add_frame_start_system(Systems.OnStartGraphRequest)
+    |> Ecspanse.add_frame_start_system(Systems.OnStopGraphRequest)
 
     #
     # every frame
