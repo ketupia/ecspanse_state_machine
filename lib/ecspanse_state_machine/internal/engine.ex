@@ -8,8 +8,10 @@ defmodule EcspanseStateMachine.Internal.Engine do
 
   @spec maybe_start_graph(Components.Graph.t()) :: :ok
   @doc """
-  Starts the graph if it is not already running and the graph is valid.
-  Emits InvalidGraph when the graph is not valid
+  Starts the graph component if it is not already running.
+  First validates the graph component by calling GraphValidator.validate/1.
+  If validation passes, starts the graph by calling start_graph/1.
+  If validation fails, publishes an InvalidGraph event with details.
   """
   def maybe_start_graph(graph_component) do
     unless graph_component.is_running do
@@ -53,7 +55,7 @@ defmodule EcspanseStateMachine.Internal.Engine do
 
   @spec maybe_stop_graph(Components.Graph.t()) :: :ok
   @doc """
-  Stops the graph if it is running.
+  Stops the graph if it is currently running by calling stop_graph.
   """
   def maybe_stop_graph(graph_component) do
     if graph_component.is_running do
@@ -123,7 +125,8 @@ defmodule EcspanseStateMachine.Internal.Engine do
         ) ::
           :ok | {:error, :not_running | :invalid_exit}
   @doc """
-  Will transition nodes if the graph is running and the next node is allowed from the current node
+  Executes the transition between the given current and next node components
+  is valid based on the graph state and allowed transitions. .
   """
   def maybe_transition_nodes(graph_component, current_node_component, next_node_component, reason) do
     if graph_component.is_running and
