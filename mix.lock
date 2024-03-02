@@ -1,0 +1,6 @@
+%{
+  "ecspanse": {:hex, :ecspanse, "0.8.1", "5b3b1d4c569efec2f0631a90b0ed60fa7f8d6d6617686044028010a79e750799", [:mix], [{:elixir_uuid, "~> 1.2", [hex: :elixir_uuid, repo: "hexpm", optional: false]}, {:ex2ms, "~> 1.6", [hex: :ex2ms, repo: "hexpm", optional: false]}, {:memoize, "~> 1.4", [hex: :memoize, repo: "hexpm", optional: false]}], "hexpm", "703fcde5c6389f34098180ff3d9b20d84b7ce164cd4cda8e06726fb210c4a945"},
+  "elixir_uuid": {:hex, :elixir_uuid, "1.2.1", "dce506597acb7e6b0daeaff52ff6a9043f5919a4c3315abb4143f0b00378c097", [:mix], [], "hexpm", "f7eba2ea6c3555cea09706492716b0d87397b88946e6380898c2889d68585752"},
+  "ex2ms": {:hex, :ex2ms, "1.7.0", "45b9f523d0b777667ded60070d82d871a37e294f0b6c5b8eca86771f00f82ee1", [:mix], [], "hexpm", "2589eee51f81f1b1caa6d08c990b1ad409215fe6f64c73f73c67d36ed10be827"},
+  "memoize": {:hex, :memoize, "1.4.3", "ead4ba248291acbaecbfe7e68ed762d329dd9c29c727020c7393dda4060c4471", [:mix], [], "hexpm", "a75176b84b9ce92faaf567c82fcbc584ef95727e0827cb38606b0a197f7e47ef"},
+}
