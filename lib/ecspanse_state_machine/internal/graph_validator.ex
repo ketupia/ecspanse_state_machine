@@ -6,25 +6,16 @@ defmodule EcspanseStateMachine.Internal.GraphValidator do
   * all exit nodes must exist
   * all nodes must be reachable
   """
+  alias EcspanseStateMachine.Internal.Locator
   alias EcspanseStateMachine.Internal.Components
   @spec validate(Components.Graph.t()) :: :ok | {:error, String.t()}
   def validate(graph_component) do
-    graph_entity = Ecspanse.Query.get_component_entity(graph_component)
-
-    nodes =
-      Ecspanse.Query.list_tagged_components_for_children(graph_entity, [
-        :ecspanse_state_machine_node
-      ])
+    nodes = Locator.get_nodes(graph_component)
 
     node_names = Enum.map(nodes, & &1.name)
 
     with :ok <- verify_unique_names(graph_component, node_names),
-         :ok <-
-           verify_starting_node_exists(
-             graph_component,
-             graph_component.starting_node_name,
-             node_names
-           ),
+         :ok <- verify_starting_node_exists(graph_component, node_names),
          :ok <- verify_allowed_exit_nodes_exist(graph_component, nodes, node_names),
          :ok <- verify_all_nodes_reachable(graph_component, nodes, node_names) do
       :ok
@@ -83,11 +74,12 @@ defmodule EcspanseStateMachine.Internal.GraphValidator do
     end
   end
 
-  defp verify_starting_node_exists(graph_component, node_name, node_names) do
-    if node_name in node_names do
+  defp verify_starting_node_exists(graph_component, node_names) do
+    if graph_component.starting_node_name in node_names do
       :ok
     else
-      {:error, "Starting node #{node_name} does not exist in graph #{graph_component.name}"}
+      {:error,
+       "Starting node #{graph_component.starting_node_name} does not exist in graph #{graph_component.name}"}
     end
   end
 

@@ -1,27 +1,40 @@
-defprotocol EcspanseStateMachine.Internal.Mermaid do
-  @spec to_state_diagram(t) :: String.t()
-  def to_state_diagram(value)
-end
+defmodule EcspanseStateMachine.Internal.Mermaid do
+  @moduledoc """
+  Converts a graph and it's nodes into the source for a Mermaid state diagram
+  """
+  alias EcspanseStateMachine.Internal.Components
+  alias EcspanseStateMachine.Internal.Locator
+  alias EcspanseStateMachine.Internal.GraphFlattener
 
-defimpl EcspanseStateMachine.Internal.Mermaid, for: EcspanseStateMachine.Internal.Components.Graph do
-  def to_state_diagram(graph) do
-    "---
-title: #{graph.name}
+  @spec as_state_diagram(Ecspanse.Entity.t()) :: String.t()
+  def as_state_diagram(graph_entity) do
+    with {:ok, graph_component} <- Components.Graph.fetch(graph_entity) do
+      node_transitions_map =
+        Locator.get_nodes(graph_component)
+        |> Enum.into(%{}, &{&1.name, encode_transitions(&1)})
+
+      flattened_node_names = GraphFlattener.flatten(graph_entity)
+
+      node_transitions =
+        Enum.map_join(flattened_node_names, "\n", &Map.get(node_transitions_map, &1))
+
+      "---
+title: #{graph_component.name}
 ---
 stateDiagram-v2
-  [*] --> #{graph.starting_node_name}"
-  end
-end
-
-defimpl EcspanseStateMachine.Internal.Mermaid, for: EcspanseStateMachine.Internal.Components.Node do
-  def to_state_diagram(node) do
-    to_state_diagram(node, node.allowed_exit_node_names)
+  [*] --> #{graph_component.starting_node_name}
+#{node_transitions}
+"
+    end
   end
 
-  def to_state_diagram(node, []), do: "  #{node.name} --> [*]"
-
-  def to_state_diagram(node, allowed_exit_node_names) do
-    Enum.map_join(allowed_exit_node_names, "\n", &encode_transition(node, &1))
+  defp encode_transitions(node) do
+    if is_nil(node.allowed_exit_node_names) || Enum.empty?(node.allowed_exit_node_names) do
+      "  #{node.name} --> [*]"
+    else
+      node.allowed_exit_node_names
+      |> Enum.map_join("\n", &encode_transition(node, &1))
+    end
   end
 
   defp encode_transition(node, exit_node_name) do
