@@ -2,6 +2,7 @@ defmodule EcspanseStateMachine.Internal.Engine do
   @moduledoc """
   This is the core logic for the operations of the state machine.
   """
+  require Logger
   alias EcspanseStateMachine.Internal.Components
   alias EcspanseStateMachine.Internal.GraphValidator
   alias EcspanseStateMachine.Internal.Locator
@@ -11,7 +12,7 @@ defmodule EcspanseStateMachine.Internal.Engine do
   Starts the graph component if it is not already running.
   First validates the graph component by calling GraphValidator.validate/1.
   If validation passes, starts the graph by calling start_graph/1.
-  If validation fails, publishes an InvalidGraph event with details.
+  If validation fails, an Error Log is written.
   """
   def maybe_start_graph(graph_entity) do
     with {:ok, graph_component} <- Components.Graph.fetch(graph_entity) do
@@ -21,12 +22,12 @@ defmodule EcspanseStateMachine.Internal.Engine do
             start_graph(graph_entity, graph_component)
 
           {:error, reason} ->
-            Ecspanse.event(EcspanseStateMachine.Events.InvalidGraph,
+            Logger.error("Invalid Graph! #{reason},  Reference: #{graph_component.reference}", %{
               graph_entity_id: Ecspanse.Query.get_component_entity(graph_component).id,
               graph_name: graph_component.name,
               graph_reference: graph_component.reference,
               reason: reason
-            )
+            })
         end
       end
     end

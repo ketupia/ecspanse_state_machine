@@ -37,11 +37,12 @@ end
 
 1. [Register the state machine's ECSpanse systems](#register-escpanse-state-machine-systems)
 2. [Spawn a graph and nodes](#spawn-a-graph-and-nodes)
-3. [Start your graph](#start-your-graph)
-4. [Listen for node transitions](#listen-for-node-transitions)
-5. [Request a node transition](#request-a-node-transition)
-6. [Stopping a graph](#stopping-a-graph)
-7. [Despawning a graph](#despawning-a-graph)
+3. [Validate your graph](#validating-your-graph)
+4. [Start your graph](#start-your-graph)
+5. [Listen for node transitions](#listen-for-node-transitions)
+6. [Request a node transition](#request-a-node-transition)
+7. [Stopping a graph](#stopping-a-graph)
+8. [Despawning a graph](#despawning-a-graph)
 
 ### Register ESCpanse State Machine Systems
 
@@ -116,12 +117,48 @@ Here's an example of spawning a node into the graph with a timeout timer. You ca
 
 The first 3 parameters are the same as before. This node is named `:combatants_attack` and there is only one allowed exit node specified `[:combatants_move]`. This node will automatically transition to `:combatants_move` after `:timer.seconds(1)`. The fourth parameter, `:timer.seconds(1)`, is the timer duration and the final parameter, `:combatants_move`, is the timeout node name. The timeout node name must be in the list of allowed exists.
 
+### Validating your graph
+
+If your graph is invalid, it won't start. EcspanseStateMachine will validate your graph and report back errors.
+
+```elixir
+    case EcspanseStateMachine.Api.validate_graph(graph_entity_id) do
+      :ok -> IO.puts("Start your graph")
+      {:error, :not_found} -> IO.puts("graph not found")
+      {:error, reason} -> IO.puts("invalid :" <> reason)
+    end
+```
+
 ### Start your graph
 
 Once you have spawned your graph and it's nodes, you set the state machine in motion by issuing a start graph request. The graph will transition into the starting node.
 
 ```elixir
   EcspanseStateMachine.Api.submit_start_graph_request(graph_entity_id)
+```
+
+#### graph start events
+
+You can listen for graph started events.
+
+```elixir
+defmodule OnGraphStarted do
+  use Ecspanse.System,
+    event_subscriptions: [EcspanseStateMachine.Events.GraphStarted]
+
+  def run(
+        %EcspanseStateMachine.Events.GraphStarted{
+          graph_entity_id: graph_entity_id,
+          graph_name: graph_name,
+          graph_reference: graph_reference
+        },
+        _frame
+      ) do
+    IO.inspect(
+      "Graph #{graph_entity_id}, #{graph_name} started, reference: #{inspect(graph_reference)}"
+    )
+  end
+end
 ```
 
 ### Listen for node transitions
@@ -181,18 +218,6 @@ The systems api has a function to despawn a graph and it's nodes.
 
 ```elixir
     EcspanseStateMachine.SystemsApi.despawn_graph(graph_entity_id)
-```
-
-## Validating your graph
-
-If your graph is invalid, it won't start. EcspanseStateMachine will validate your graph and report back errors.
-
-```elixir
-    case EcspanseStateMachine.Api.validate_graph(graph_entity_id) do
-      :ok -> IO.puts("graph is valid")
-      {:error, :not_found} -> IO.puts("graph not found")
-      {:error, reason} -> IO.puts("invalid :" <> reason)
-    end
 ```
 
 ## Generate a Mermaid State Diagram
