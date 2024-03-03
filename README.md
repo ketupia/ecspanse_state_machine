@@ -121,7 +121,7 @@ The first 3 parameters are the same as before. This node is named `:combatants_a
 Once you have spawned your graph and it's nodes, you set the state machine in motion by issuing a start graph request. The graph will transition into the starting node.
 
 ```elixir
-  EcspanseStateMachine.Api.submit_start_graph_request(graph_entity)
+  EcspanseStateMachine.Api.submit_start_graph_request(graph_entity_id)
 ```
 
 ### Listen for node transitions
@@ -170,7 +170,7 @@ The graph will automatically stop when it reaches a node without allowed exit no
 You can stop a graph from running anytime by submitting a stop graph request.
 
 ```elixir
-  EcspanseStateMachine.Api.submit_stop_graph_request(graph_entity)
+  EcspanseStateMachine.Api.submit_stop_graph_request(graph_entity_id)
 ```
 
 The graph will be stopped and if the timeout timer of current node will be stopped (provided it has one).
@@ -188,7 +188,7 @@ The systems api has a function to despawn a graph and it's nodes.
 If your graph is invalid, it won't start. EcspanseStateMachine will validate your graph and report back errors.
 
 ```elixir
-    case EcspanseStateMachine.Api.validate_graph(graph_entity) do
+    case EcspanseStateMachine.Api.validate_graph(graph_entity_id) do
       :ok -> IO.puts("graph is valid")
       {:error, :not_found} -> IO.puts("graph not found")
       {:error, reason} -> IO.puts("invalid :" <> reason)
@@ -200,7 +200,7 @@ If your graph is invalid, it won't start. EcspanseStateMachine will validate you
 After you have spawned a graph, you can get a [Mermaid.js](https://mermaid.js.org/) state diagram for it.
 
 ```elixir
-  EcspanseStateMachine.Api.as_mermaid_diagram(graph_entity)
+  EcspanseStateMachine.Api.as_mermaid_diagram(graph_entity_id)
 ```
 
 Here's an example output.

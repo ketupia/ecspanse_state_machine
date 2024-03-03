@@ -10,7 +10,7 @@ defmodule EcspanseStateMachine.Internal.Mermaid do
   def as_state_diagram(graph_entity) do
     with {:ok, graph_component} <- Components.Graph.fetch(graph_entity) do
       node_transitions_map =
-        Locator.get_nodes(graph_component)
+        Locator.get_nodes(graph_entity)
         |> Enum.into(%{}, &{&1.name, encode_transitions(&1)})
 
       flattened_node_names = GraphFlattener.flatten(graph_entity)
@@ -28,20 +28,21 @@ stateDiagram-v2
     end
   end
 
-  defp encode_transitions(node) do
-    if is_nil(node.allowed_exit_node_names) || Enum.empty?(node.allowed_exit_node_names) do
-      "  #{node.name} --> [*]"
+  defp encode_transitions(node_component) do
+    if is_nil(node_component.allowed_exit_node_names) ||
+         Enum.empty?(node_component.allowed_exit_node_names) do
+      "  #{node_component.name} --> [*]"
     else
-      node.allowed_exit_node_names
-      |> Enum.map_join("\n", &encode_transition(node, &1))
+      node_component.allowed_exit_node_names
+      |> Enum.map_join("\n", &encode_transition(node_component, &1))
     end
   end
 
-  defp encode_transition(node, exit_node_name) do
-    if node.has_timer and node.timeout_node_name == exit_node_name do
-      "  #{node.name} --> #{exit_node_name}: ⏲️"
+  defp encode_transition(node_component, exit_node_name) do
+    if node_component.has_timer and node_component.timeout_node_name == exit_node_name do
+      "  #{node_component.name} --> #{exit_node_name}: ⏲️"
     else
-      "  #{node.name} --> #{exit_node_name}"
+      "  #{node_component.name} --> #{exit_node_name}"
     end
   end
 end

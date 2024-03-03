@@ -8,17 +8,21 @@ defmodule EcspanseStateMachine.Internal.GraphValidator do
   """
   alias EcspanseStateMachine.Internal.Locator
   alias EcspanseStateMachine.Internal.Components
-  @spec validate(Components.Graph.t()) :: :ok | {:error, String.t()}
-  def validate(graph_component) do
-    nodes = Locator.get_nodes(graph_component)
 
-    node_names = Enum.map(nodes, & &1.name)
+  @spec validate(Ecspanse.Entity.t()) ::
+          :ok | {:error, String.t()} | {:error, :not_found}
+  def validate(graph_entity) do
+    nodes = Locator.get_nodes(graph_entity)
 
-    with :ok <- verify_unique_names(graph_component, node_names),
-         :ok <- verify_starting_node_exists(graph_component, node_names),
-         :ok <- verify_allowed_exit_nodes_exist(graph_component, nodes, node_names),
-         :ok <- verify_all_nodes_reachable(graph_component, nodes, node_names) do
-      :ok
+    with {:ok, graph_component} <- Components.Graph.fetch(graph_entity) do
+      node_names = Enum.map(nodes, & &1.name)
+
+      with :ok <- verify_unique_names(graph_component, node_names),
+           :ok <- verify_starting_node_exists(graph_component, node_names),
+           :ok <- verify_allowed_exit_nodes_exist(graph_component, nodes, node_names),
+           :ok <- verify_all_nodes_reachable(graph_component, nodes, node_names) do
+        :ok
+      end
     end
   end
 
@@ -83,7 +87,7 @@ defmodule EcspanseStateMachine.Internal.GraphValidator do
     end
   end
 
-  def verify_unique_names(graph_component, node_names) do
+  defp verify_unique_names(graph_component, node_names) do
     duplicate_node_names =
       node_names
       |> Enum.group_by(& &1)

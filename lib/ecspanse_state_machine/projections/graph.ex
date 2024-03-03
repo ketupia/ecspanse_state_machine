@@ -51,7 +51,10 @@ defmodule EcspanseStateMachine.Projections.Graph do
       nil
     else
       {:ok, node_component} =
-        Locator.fetch_node_component(graph_component, graph_component.current_node_name)
+        Locator.fetch_node_component_by_name(
+          Ecspanse.Query.get_component_entity(graph_component),
+          graph_component.current_node_name
+        )
 
       project_node(node_component)
     end

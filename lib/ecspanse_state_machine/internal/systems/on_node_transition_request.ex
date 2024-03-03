@@ -12,20 +12,20 @@ defmodule EcspanseStateMachine.Internal.Systems.OnNodeTransitionRequest do
 
   def run(
         %Events.NodeTransitionRequest{
-          graph_name: graph_name,
+          graph_entity_id: graph_entity_id,
           current_node_name: current_node_name,
           target_node_name: target_node_name,
           reason: reason
         },
         _frame
       ) do
-    with {:ok, graph_component} <- Locator.fetch_graph_component_by_name(graph_name),
+    with {:ok, graph_entity} <- Ecspanse.Entity.fetch(graph_entity_id),
          {:ok, current_node_component} <-
-           Locator.fetch_node_component(graph_component, current_node_name),
+           Locator.fetch_node_component_by_name(graph_entity, current_node_name),
          {:ok, target_node_component} <-
-           Locator.fetch_node_component(graph_component, target_node_name) do
+           Locator.fetch_node_component_by_name(graph_entity, target_node_name) do
       Engine.maybe_transition_nodes(
-        graph_component,
+        graph_entity,
         current_node_component,
         target_node_component,
         reason

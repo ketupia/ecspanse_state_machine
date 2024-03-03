@@ -7,10 +7,11 @@ defmodule EcspanseStateMachine.Internal.GraphFlattener do
   alias EcspanseStateMachine.Internal.Locator
   alias EcspanseStateMachine.Internal.Components
 
+  @spec flatten(Ecspanse.Entity.t()) :: list(binary()) | {:error, :not_found}
   def flatten(graph_entity) do
     with {:ok, graph_component} <- Components.Graph.fetch(graph_entity) do
       nodes_by_name =
-        Locator.get_nodes(graph_component)
+        Locator.get_nodes(graph_entity)
         |> Enum.into(%{}, &{&1.name, &1})
 
       data = %{

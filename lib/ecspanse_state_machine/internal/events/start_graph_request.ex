@@ -5,7 +5,7 @@ defmodule EcspanseStateMachine.Internal.Events.StartGraphRequest do
   will be emitted and that state's timer will be started if it has one.
 
   ## Fields
-  * graph_name: the name of the graph to start
+  * graph_entity_id: the entity id of the graph to start
   """
-  use Ecspanse.Event, fields: [:graph_name]
+  use Ecspanse.Event, fields: [:graph_entity_id]
 end
