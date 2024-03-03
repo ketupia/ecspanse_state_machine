@@ -85,7 +85,7 @@ Here's an example of creating a graph.
 
 `:battle_start` is the name of the node the graph will start in. That is, when you request a graph start, a transition to this node will happen. You will spawn this node in a moment.
 
-The last parameter, `%{battle_entity_id: battle_entity.id}`, is a reference for you to provide to the state machine. It can be `any()` data you want. This data will be provided back to you in events. This sample is from a system with many graphs running many battles. When a `NodeTransition` event is received, the reference provides quick access to look up the battle.
+The last parameter, `%{battle_entity_id: battle_entity.id}`, is metadata you provide to the state machine. It can be `any()` data you want. This data will be provided back to you in events. This sample is from a system with many graphs running many battles. When a `NodeTransition` event is received, the metadata provides quick access to look up the battle.
 
 #### Spawn a node without a timer
 
@@ -148,14 +148,14 @@ defmodule OnGraphStarted do
 
   def run(
         %EcspanseStateMachine.Events.GraphStarted{
-          graph_entity_id: graph_entity_id,
-          graph_name: graph_name,
-          graph_reference: graph_reference
+          entity_id: entity_id,
+          name: name,
+          metadata: metadata
         },
         _frame
       ) do
     IO.inspect(
-      "Graph #{graph_entity_id}, #{graph_name} started, reference: #{inspect(graph_reference)}"
+      "Graph #{entity_id}, #{name} started, metadata: #{inspect(metadata)}"
     )
   end
 end
@@ -174,7 +174,7 @@ defmodule OnNodeTransition do
         %EcspanseStateMachine.Events.NodeTransition{
           graph_entity_id: graph_entity_id,
           graph_name: graph_name,
-          graph_reference: graph_reference,
+          graph_metadata: graph_metadata,
           previous_node_name: previous_node_name,
           current_node_name: current_node_name,
           reason: _reason

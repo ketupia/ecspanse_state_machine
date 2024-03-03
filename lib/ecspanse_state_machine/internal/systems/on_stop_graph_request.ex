@@ -7,8 +7,8 @@ defmodule EcspanseStateMachine.Internal.Systems.OnStopGraphRequest do
 
   use Ecspanse.System, event_subscriptions: [Events.StopGraphRequest]
 
-  def run(%Events.StopGraphRequest{graph_entity_id: graph_entity_id}, _frame) do
-    with {:ok, graph_entity} <- Ecspanse.Entity.fetch(graph_entity_id) do
+  def run(%Events.StopGraphRequest{entity_id: entity_id}, _frame) do
+    with {:ok, graph_entity} <- Ecspanse.Entity.fetch(entity_id) do
       Engine.maybe_stop_graph(graph_entity)
     end
   end

@@ -8,7 +8,7 @@ defmodule EcspanseStateMachine.Internal.Entities.Graph do
   @doc """
   The entity_spec for a graph
   """
-  def blueprint(graph_name, starting_node_name, reference \\ nil),
+  def blueprint(graph_name, starting_node_name, metadata \\ nil),
     do:
       {Ecspanse.Entity,
        components: [
@@ -16,7 +16,7 @@ defmodule EcspanseStateMachine.Internal.Entities.Graph do
           [
             name: graph_name,
             starting_node_name: starting_node_name,
-            reference: reference,
+            metadata: metadata,
             is_running: false
           ]}
        ]}

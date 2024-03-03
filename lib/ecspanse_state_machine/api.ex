@@ -46,7 +46,7 @@ defmodule EcspanseStateMachine.Api do
   Submits a request to start the graph running
   """
   def submit_start_graph_request(graph_entity_id) do
-    Ecspanse.event({Events.StartGraphRequest, [graph_entity_id: graph_entity_id]})
+    Ecspanse.event({Events.StartGraphRequest, [entity_id: graph_entity_id]})
   end
 
   @spec submit_stop_graph_request(Ecspanse.Entity.id()) ::
@@ -55,7 +55,7 @@ defmodule EcspanseStateMachine.Api do
   Submits a request to stop the graph running
   """
   def submit_stop_graph_request(graph_entity_id) do
-    Ecspanse.event({Events.StopGraphRequest, [graph_entity_id: graph_entity_id]})
+    Ecspanse.event({Events.StopGraphRequest, [entity_id: graph_entity_id]})
   end
 
   @spec project(Ecspanse.Entity.id()) ::

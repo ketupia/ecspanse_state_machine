@@ -9,7 +9,7 @@ defmodule EcspanseStateMachine.Projections.Graph do
     fields: [
       :entity_id,
       :name,
-      :reference,
+      :metadata,
       :starting_node_name,
       :is_running,
       :current_node_name,
@@ -26,7 +26,7 @@ defmodule EcspanseStateMachine.Projections.Graph do
         [
           {:entity_id, graph_entity.id},
           {:name, graph_component.name},
-          {:reference, graph_component.reference},
+          {:metadata, graph_component.metadata},
           {:starting_node_name, graph_component.starting_node_name},
           {:is_running, graph_component.is_running},
           {:current_node_name, graph_component.current_node_name},

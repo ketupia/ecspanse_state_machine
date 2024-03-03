@@ -4,7 +4,7 @@ defmodule EcspanseStateMachine.Internal.Events.StopGraphRequest do
   The current node's timer will be stopped (if it has one).
 
   ## Fields
-  * graph_entity_id: the entity id of the graph to stop
+  * entity_id: the entity id of the graph to stop
   """
-  use Ecspanse.Event, fields: [:graph_entity_id]
+  use Ecspanse.Event, fields: [:entity_id]
 end

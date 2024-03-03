@@ -13,7 +13,7 @@ defmodule EcspanseStateMachine.Events.NodeTransition do
     fields: [
       :graph_entity_id,
       :graph_name,
-      :graph_reference,
+      :graph_metadata,
       :previous_node_name,
       :current_node_name,
       :reason

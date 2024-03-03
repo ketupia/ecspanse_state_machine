@@ -24,9 +24,9 @@ defmodule EcspanseStateMachine.Internal.Spawner do
   @doc """
   Spawns a graph entity and returns the entity_id
   """
-  def spawn_graph(graph_name, starting_node_name, reference \\ nil) do
+  def spawn_graph(graph_name, starting_node_name, metadata \\ nil) do
     graph_entity =
-      Entities.Graph.blueprint(graph_name, starting_node_name, reference)
+      Entities.Graph.blueprint(graph_name, starting_node_name, metadata)
       |> Ecspanse.Command.spawn_entity!()
 
     {:ok, graph_entity.id}

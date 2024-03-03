@@ -1,6 +1,6 @@
 defmodule EcspanseStateMachine.SystemsApi do
   @moduledoc """
-  The Api to use from other Ecspanse systems
+  The Api to use from other Ecspanse systems to spawn and despawn entities.
   """
   alias EcspanseStateMachine.Internal.Spawner
 
@@ -15,8 +15,8 @@ defmodule EcspanseStateMachine.SystemsApi do
   @doc """
   Spawns a graph entity and returns the entity_id
   """
-  def spawn_graph(graph_name, starting_node_name, reference \\ nil) do
-    Spawner.spawn_graph(graph_name, starting_node_name, reference)
+  def spawn_graph(graph_name, starting_node_name, metadata \\ nil) do
+    Spawner.spawn_graph(graph_name, starting_node_name, metadata)
   end
 
   @spec spawn_node(Ecspanse.Entity.id(), atom(), list(atom())) ::

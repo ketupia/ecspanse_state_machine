@@ -5,7 +5,7 @@ defmodule EcspanseStateMachine.Internal.Components.Graph do
   ## Fields
   * name: an atom uniquely identifying the graph
   * starting_node_name: the initial node the graph starts in
-  * reference: data provided by the graph creator that will be passed back in events
+  * metadata: data provided by the graph creator that will be passed back in events
   * is_running: true if the graph is running
   * current_node_name: the current node name the graph is in
   """
@@ -13,7 +13,7 @@ defmodule EcspanseStateMachine.Internal.Components.Graph do
     state: [
       :name,
       :starting_node_name,
-      :reference,
+      :metadata,
       :is_running,
       :current_node_name
     ],

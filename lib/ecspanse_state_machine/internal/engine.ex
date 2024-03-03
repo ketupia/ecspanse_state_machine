@@ -22,10 +22,10 @@ defmodule EcspanseStateMachine.Internal.Engine do
             start_graph(graph_entity, graph_component)
 
           {:error, reason} ->
-            Logger.error("Invalid Graph! #{reason},  Reference: #{graph_component.reference}", %{
+            Logger.error("Invalid Graph! #{reason},  metadata: #{graph_component.metadata}", %{
               graph_entity_id: Ecspanse.Query.get_component_entity(graph_component).id,
-              graph_name: graph_component.name,
-              graph_reference: graph_component.reference,
+              name: graph_component.name,
+              metadata: graph_component.metadata,
               reason: reason
             })
         end
@@ -46,9 +46,9 @@ defmodule EcspanseStateMachine.Internal.Engine do
       Ecspanse.event(
         {EcspanseStateMachine.Events.GraphStarted,
          [
-           graph_entity_id: graph_entity.id,
-           graph_name: graph_component.name,
-           graph_reference: graph_component.reference
+           entity_id: graph_entity.id,
+           name: graph_component.name,
+           metadata: graph_component.metadata
          ]}
       )
 
@@ -82,9 +82,9 @@ defmodule EcspanseStateMachine.Internal.Engine do
     Ecspanse.event(
       {EcspanseStateMachine.Events.GraphStopped,
        [
-         graph_entity_id: graph_entity.id,
-         graph_name: graph_component.name,
-         graph_reference: graph_component.reference
+         entity_id: graph_entity.id,
+         name: graph_component.name,
+         metadata: graph_component.metadata
        ]}
     )
   end
@@ -135,31 +135,70 @@ defmodule EcspanseStateMachine.Internal.Engine do
   """
   def maybe_transition_nodes(graph_entity, current_node_component, next_node_component, reason) do
     with {:ok, graph_component} <- Components.Graph.fetch(graph_entity) do
-      if graph_component.is_running and
-           current_node_component.name == graph_component.current_node_name do
-        is_allowed_exit =
-          case current_node_component do
-            nil ->
-              next_node_component.name == graph_component.starting_node_name
-
-            current_node_component ->
-              next_node_component.name in current_node_component.allowed_exit_node_names
-          end
-
-        if is_allowed_exit do
-          transition_nodes(
-            graph_entity,
-            graph_component,
-            current_node_component,
-            next_node_component,
-            reason
-          )
-        else
-          {:error, :invalid_exit}
-        end
-      else
-        {:error, :not_running}
+      if ensure_graph_is_running(graph_entity, graph_component) and
+           ensure_current_node_matches(graph_entity, graph_component, current_node_component) and
+           ensure_is_allowed_exit(
+             graph_entity,
+             graph_component,
+             current_node_component,
+             next_node_component
+           ) do
+        transition_nodes(
+          graph_entity,
+          graph_component,
+          current_node_component,
+          next_node_component,
+          reason
+        )
       end
+    end
+  end
+
+  defp ensure_is_allowed_exit(graph_entity, graph_component, nil, target_node_component) do
+    if graph_component.starting_node_name == target_node_component.name do
+      true
+    else
+      Logger.warning(
+        "Graph #{graph_entity.id}, #{graph_component.name} current node is nil.  The only allowed exit is to the start node, #{graph_component.starting_node_name} and not #{target_node_component.name}"
+      )
+
+      false
+    end
+  end
+
+  defp ensure_is_allowed_exit(
+         graph_entity,
+         graph_component,
+         current_node_component,
+         target_node_component
+       ) do
+    if target_node_component.name in current_node_component.allowed_exit_node_names do
+      true
+    else
+      Logger.warning(
+        "#{target_node_component.name} is not in the allowed exit nodes #{Enum.join(current_node_component.allowed_exit_node_names, ", ")} for #{current_node_component.name} in #{} Graph #{graph_entity.id}, #{graph_component.name} current node is nil.  The only allowed exit is to the start node, #{graph_component.starting_node_name} and not #{target_node_component.name}"
+      )
+    end
+  end
+
+  defp ensure_current_node_matches(graph_entity, graph_component, node_component) do
+    if graph_component.current_node_name == node_component.name do
+      true
+    else
+      Logger.warning(
+        "Graph #{graph_entity.id}, #{graph_component.name} current node is #{graph_component.current_node_name} and not #{node_component.name}"
+      )
+
+      false
+    end
+  end
+
+  defp ensure_graph_is_running(graph_entity, graph_component) do
+    if graph_component.is_running do
+      true
+    else
+      Logger.warning("Graph #{graph_entity.id}, #{graph_component.name} not running")
+      false
     end
   end
 
@@ -199,7 +238,7 @@ defmodule EcspanseStateMachine.Internal.Engine do
        [
          graph_entity_id: graph_entity.id,
          graph_name: graph_component.name,
-         graph_reference: graph_component.reference,
+         graph_metadata: graph_component.metadata,
          previous_node_name: current_node_name,
          current_node_name: next_node_component.name,
          reason: reason
