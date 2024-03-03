@@ -7,7 +7,7 @@ defmodule EcspanseStateMachine.Internal.Components.Graph do
   * starting_node_name: the initial node the graph starts in
   * metadata: data provided by the graph creator that will be passed back in events
   * is_running: true if the graph is running
-  * current_node_name: the current node name the graph is in
+  * current_node_name: the node name the graph is in
   """
   use Ecspanse.Component,
     state: [

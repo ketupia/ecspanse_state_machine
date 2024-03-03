@@ -175,8 +175,8 @@ defmodule OnNodeTransition do
           graph_entity_id: graph_entity_id,
           graph_name: graph_name,
           graph_metadata: graph_metadata,
-          previous_node_name: previous_node_name,
-          current_node_name: current_node_name,
+          from_node_name: from_node_name,
+          to_node_name: to_node_name,
           reason: _reason
         },
         _frame
@@ -190,13 +190,13 @@ end
 
 Node transitions happen when a node has a timeout and the timeout elapses or upon request. Submitting a request will cause the graph to transition from the current node to the target node.
 
-The request will be executed so long as the graph is running, the current node is the same, and the target node is in the list of allowed exit states from the current node.
+The request will be executed so long as the graph is running, the current node is the same as the from node, and the target node is in the list of allowed exit states from the current node.
 
 ```elixir
   EcspanseStateMachine.Api.submit_node_transition_request(graph_entity_id, :turn_start, :decision_phase)
 ```
 
-In this example, :turn_start is the current node name and :decision_phase is the target node name.
+In this example, :turn_start is the from node name and :decision_phase is the target node name.
 
 <!-- MDOC !-->
 

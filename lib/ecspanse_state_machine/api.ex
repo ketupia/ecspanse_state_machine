@@ -25,16 +25,16 @@ defmodule EcspanseStateMachine.Api do
   """
   def submit_node_transition_request(
         graph_entity_id,
-        current_node_name,
-        target_node_name,
+        from_node_name,
+        to_node_name,
         reason \\ :request
       ) do
     Ecspanse.event(
       {Events.NodeTransitionRequest,
        [
          graph_entity_id: graph_entity_id,
-         current_node_name: current_node_name,
-         target_node_name: target_node_name,
+         from_node_name: from_node_name,
+         to_node_name: to_node_name,
          reason: reason
        ]}
     )
