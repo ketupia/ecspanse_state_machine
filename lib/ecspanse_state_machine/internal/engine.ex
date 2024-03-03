@@ -34,25 +34,25 @@ defmodule EcspanseStateMachine.Internal.Engine do
 
   @spec start_graph(Ecspanse.Entity.t(), Components.Graph.t()) :: :ok
   defp start_graph(graph_entity, graph_component) do
-    Ecspanse.Command.update_component!(graph_component,
-      is_running: true
-    )
+    with {:ok, next_node_component} <-
+           Locator.fetch_node_component_by_name(graph_entity, graph_component.starting_node_name) do
+      Ecspanse.Command.update_component!(graph_component,
+        is_running: true
+      )
 
-    {:ok, graph_component} = Components.Graph.fetch(graph_entity)
+      {:ok, graph_component} = Components.Graph.fetch(graph_entity)
 
-    Ecspanse.event(
-      {EcspanseStateMachine.Events.GraphStarted,
-       [
-         graph_entity_id: graph_entity.id,
-         graph_name: graph_component.name,
-         graph_reference: graph_component.reference
-       ]}
-    )
+      Ecspanse.event(
+        {EcspanseStateMachine.Events.GraphStarted,
+         [
+           graph_entity_id: graph_entity.id,
+           graph_name: graph_component.name,
+           graph_reference: graph_component.reference
+         ]}
+      )
 
-    next_node_component =
-      Locator.get_node_component_by_name(graph_entity, graph_component.starting_node_name)
-
-    transition_nodes(graph_entity, graph_component, nil, next_node_component, :graph_started)
+      transition_nodes(graph_entity, graph_component, nil, next_node_component, :graph_started)
+    end
   end
 
   @spec maybe_stop_graph(Ecspanse.Entity.t()) :: :ok
@@ -69,13 +69,10 @@ defmodule EcspanseStateMachine.Internal.Engine do
 
   @spec stop_graph(Ecspanse.Entity.t(), Components.Graph.t()) :: :ok
   defp stop_graph(graph_entity, graph_component) do
-    current_node_component =
-      Locator.get_node_component_by_name(
-        graph_entity,
-        graph_component.current_node_name
-      )
-
-    stop_timer(current_node_component)
+    with {:ok, current_node_component} <-
+           Locator.fetch_node_component_by_name(graph_entity, graph_component.current_node_name) do
+      stop_timer(current_node_component)
+    end
 
     Ecspanse.Command.update_component!(graph_component,
       is_running: false

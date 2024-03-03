@@ -28,15 +28,14 @@ defmodule EcspanseStateMachine.Internal.Locator do
   Fetches the node component in the graph by name
   """
   def fetch_node_component_by_name(graph_entity, node_name) do
-    case get_node_component_by_name(graph_entity, node_name) do
+    node_component =
+      get_nodes(graph_entity)
+      |> Enum.find(&(&1.name == node_name))
+
+    case node_component do
       nil -> {:error, :not_found}
       node_component -> {:ok, node_component}
     end
-  end
-
-  def get_node_component_by_name(graph_entity, node_name) do
-    get_nodes(graph_entity)
-    |> Enum.find(&(&1.name == node_name))
   end
 
   @spec get_nodes(Ecspanse.Entity.t()) :: list(Components.Node.t())

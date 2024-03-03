@@ -72,7 +72,7 @@ The `ECSpanse State Machine System Api` exposes functions to spawn a graph and i
 Here's an example of creating a graph.
 
 ```elixir
-    {:ok, graph_entity} =
+    {:ok, graph_entity_id} =
       EcspanseStateMachine.SystemsApi.spawn_graph(
         :battle_123,
         :battle_start,
@@ -92,7 +92,7 @@ Here's an example of spawning a node into the graph without a timeout timer. You
 
 ```elixir
     EcspanseStateMachine.SystemsApi.spawn_node(
-      graph_entity,
+      graph_entity_id,
       :action_phase_end,
       [:decision_phase, :battle_end]
     )
@@ -106,7 +106,7 @@ Here's an example of spawning a node into the graph with a timeout timer. You ca
 
 ```elixir
     EcspanseStateMachine.SystemsApi.spawn_node(
-      graph_entity,
+      graph_entity_id,
       :combatants_attack,
       [:combatants_move],
       :timer.seconds(1),
@@ -156,7 +156,7 @@ Node transitions happen when a node has a timeout and the timeout elapses or upo
 The request will be executed so long as the graph is running, the current node is the same, and the target node is in the list of allowed exit states from the current node.
 
 ```elixir
-  EcspanseStateMachine.Api.submit_node_transition_request(graph_entity, :turn_start, :decision_phase)
+  EcspanseStateMachine.Api.submit_node_transition_request(graph_entity_id, :turn_start, :decision_phase)
 ```
 
 In this example, :turn_start is the current node name and :decision_phase is the target node name.
