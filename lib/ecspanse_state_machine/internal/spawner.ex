@@ -3,9 +3,46 @@ defmodule EcspanseStateMachine.Internal.Spawner do
   Functions to spawn and despawn graphs and nodes
   """
   alias EcspanseStateMachine.Internal.Entities
-  alias EcspanseStateMachine.Internal.Components
   alias EcspanseStateMachine.Internal.Locator
   alias EcspanseStateMachine.Internal.Engine
+
+  @spec spawn_graph(EcspanseStateMachine.SpawnAttributes.Graph.t()) ::
+          {:ok, Ecspanse.Entity.id()} | {:error, String.t()}
+  def spawn_graph(graph_attributes) do
+    with :ok <- EcspanseStateMachine.SpawnAttributes.Graph.validate(graph_attributes) do
+      graph_entity =
+        Entities.Graph.blueprint(
+          graph_attributes.name,
+          graph_attributes.starting_node,
+          graph_attributes.auto_start,
+          graph_attributes.metadata
+        )
+        |> Ecspanse.Command.spawn_entity!()
+
+      graph_attributes.nodes
+      |> Enum.each(fn node_attr ->
+        if node_attr.timer == nil do
+          Entities.Node.blueprint(graph_entity, node_attr.name, node_attr.exits_to)
+          |> Ecspanse.Command.spawn_entity!()
+        else
+          Entities.Node.blueprint(
+            graph_entity,
+            node_attr.name,
+            node_attr.exits_to,
+            node_attr.timer.duration,
+            node_attr.timer.exits_to
+          )
+          |> Ecspanse.Command.spawn_entity!()
+        end
+      end)
+
+      if graph_attributes.auto_start do
+        Engine.maybe_start_graph(graph_entity)
+      end
+
+      {:ok, graph_entity.id}
+    end
+  end
 
   @spec despawn_graph(Ecspanse.Entity.t()) :: :ok | {:error, :not_found}
   def despawn_graph(graph_entity) do
@@ -18,65 +55,5 @@ defmodule EcspanseStateMachine.Internal.Spawner do
     |> Ecspanse.Command.despawn_entities!()
 
     Ecspanse.Command.despawn_entity!(graph_entity)
-  end
-
-  @spec spawn_graph(atom(), atom(), any()) :: {:ok, Ecspanse.Entity.id()}
-  @doc """
-  Spawns a graph entity and returns the entity_id
-  """
-  def spawn_graph(graph_name, starting_node_name, metadata \\ nil) do
-    graph_entity =
-      Entities.Graph.blueprint(graph_name, starting_node_name, metadata)
-      |> Ecspanse.Command.spawn_entity!()
-
-    {:ok, graph_entity.id}
-  end
-
-  @spec spawn_node(Ecspanse.Entity.t(), atom(), list(atom())) ::
-          :ok | {:error, :graph_is_running} | {:error, :not_found}
-  @doc """
-  Will spawn the node into the graph unless the graph is running
-  """
-  def spawn_node(graph_entity, node_name, allowed_exit_node_names \\ []) do
-    with {:ok, graph_component} <- Components.Graph.fetch(graph_entity) do
-      if graph_component.is_running do
-        {:error, :graph_is_running}
-      else
-        Entities.Node.blueprint(graph_entity, node_name, allowed_exit_node_names)
-        |> Ecspanse.Command.spawn_entity!()
-
-        :ok
-      end
-    end
-  end
-
-  @spec spawn_node(Ecspanse.Entity.t(), atom(), list(atom()), pos_integer(), atom()) ::
-          :ok | {:error, :graph_is_running} | {:error, :not_found}
-  @doc """
-  Will spawn the node with a timeout timer into the graph unless the graph is running
-  """
-  def spawn_node(
-        graph_entity,
-        node_name,
-        allowed_exit_node_names \\ [],
-        timeout_duration,
-        timeout_node_name
-      ) do
-    with {:ok, graph_component} <- Components.Graph.fetch(graph_entity) do
-      if graph_component.is_running do
-        {:error, :graph_is_running}
-      else
-        Entities.Node.blueprint(
-          graph_entity,
-          node_name,
-          allowed_exit_node_names,
-          timeout_duration,
-          timeout_node_name
-        )
-        |> Ecspanse.Command.spawn_entity!()
-
-        :ok
-      end
-    end
   end
 end

@@ -4,31 +4,18 @@ defmodule EcspanseStateMachine.Internal.Engine do
   """
   require Logger
   alias EcspanseStateMachine.Internal.Components
-  alias EcspanseStateMachine.Internal.GraphValidator
   alias EcspanseStateMachine.Internal.Locator
 
   @spec maybe_start_graph(Ecspanse.Entity.t()) :: :ok
   @doc """
   Starts the graph component if it is not already running.
-  First validates the graph component by calling GraphValidator.validate/1.
   If validation passes, starts the graph by calling start_graph/1.
   If validation fails, an Error Log is written.
   """
   def maybe_start_graph(graph_entity) do
     with {:ok, graph_component} <- Components.Graph.fetch(graph_entity) do
       unless graph_component.is_running do
-        case GraphValidator.validate(graph_entity) do
-          :ok ->
-            start_graph(graph_entity, graph_component)
-
-          {:error, reason} ->
-            Logger.error("Invalid Graph! #{reason},  metadata: #{graph_component.metadata}", %{
-              graph_entity_id: Ecspanse.Query.get_component_entity(graph_component).id,
-              name: graph_component.name,
-              metadata: graph_component.metadata,
-              reason: reason
-            })
-        end
+        start_graph(graph_entity, graph_component)
       end
     end
   end

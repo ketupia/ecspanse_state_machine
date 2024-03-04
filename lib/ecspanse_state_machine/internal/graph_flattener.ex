@@ -31,9 +31,16 @@ defmodule EcspanseStateMachine.Internal.GraphFlattener do
       data = Map.put(data, :visited, List.insert_at(data.visited, 0, node_name))
       node = Map.get(data.nodes_by_name, node_name)
 
-      Enum.reduce(node.allowed_exit_node_names, data, fn exit_node_name, acc ->
-        traverse(exit_node_name, acc)
-      end)
+      data =
+        Enum.reduce(node.allowed_exit_node_names, data, fn exit_node_name, acc ->
+          traverse(exit_node_name, acc)
+        end)
+
+      if node.has_timer do
+        traverse(node.timeout_node_name, data)
+      else
+        data
+      end
     end
   end
 end

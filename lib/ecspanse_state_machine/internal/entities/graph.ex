@@ -4,18 +4,19 @@ defmodule EcspanseStateMachine.Internal.Entities.Graph do
   """
   alias EcspanseStateMachine.Internal.Components
 
-  @spec blueprint(atom(), atom()) :: Ecspanse.Entity.entity_spec()
+  @spec blueprint(atom(), atom(), boolean(), any()) :: Ecspanse.Entity.entity_spec()
   @doc """
   The entity_spec for a graph
   """
-  def blueprint(graph_name, starting_node_name, metadata \\ nil),
+  def blueprint(name, starting_node_name, auto_start, metadata \\ nil),
     do:
       {Ecspanse.Entity,
        components: [
          {Components.Graph,
           [
-            name: graph_name,
+            name: name,
             starting_node_name: starting_node_name,
+            auto_start: auto_start,
             metadata: metadata,
             is_running: false
           ]}

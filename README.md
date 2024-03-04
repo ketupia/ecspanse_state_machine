@@ -36,23 +36,22 @@ end
 ## How to use
 
 1. [Register the state machine's ECSpanse systems](#register-escpanse-state-machine-systems)
-2. [Spawn a graph and nodes](#spawn-a-graph-and-nodes)
-3. [Validate your graph](#validating-your-graph)
-4. [Start your graph](#start-your-graph)
-5. [Listen for node transitions](#listen-for-node-transitions)
-6. [Request a node transition](#request-a-node-transition)
-7. [Stopping a graph](#stopping-a-graph)
-8. [Despawning a graph](#despawning-a-graph)
+2. [Spawn a graph](#spawn-a-graph)
+3. [Start your graph](#start-your-graph)
+4. [Listen for node transitions](#listen-for-node-transitions)
+5. [Request a node transition](#request-a-node-transition)
+6. [Stopping a graph](#stopping-a-graph)
+7. [Despawning a graph](#despawning-a-graph)
 
 ### Register ESCpanse State Machine Systems
 
-As part of your ESCpanse setup, you will have defined a `manager` with a `setup(data)` function. In that function, chain a call to the `ESCpanseStateMachine.Manager.setup`
+As part of your ESCpanse setup, you will have defined a `manager` with a `setup(data)` function. In that function, chain a call to `ESCpanseStateMachine.setup`
 
 ```elixir
   def setup(data) do
     data
     # register the state machine's systems
-    |> EcspanseStateMachine.Manager.setup()
+    |> EcspanseStateMachine.setup()
 
     # Be sure to register the Ecspanse System Timer!
     |> Ecspanse.add_frame_end_system(Ecspanse.System.Timer)
@@ -62,79 +61,57 @@ As part of your ESCpanse setup, you will have defined a `manager` with a `setup(
 
 ECSpanseStateMachine will add the systems it needs for you.
 
-### Spawn a graph and nodes
+### Spawn a graph
 
 A graph is a collection of nodes along with some state such as the starting node name and is running. Nodes represent the states in the state machine. Nodes have a name, a list of allowed exit transitions, and may have a timeout timer.
 
-The `ECSpanse State Machine System Api` exposes functions to spawn a graph and it's nodes. Since you will be spawning nodes, you can only call these functions from within an `ECSpanse System`.
-
-#### Spawn a graph
-
-Here's an example of creating a graph.
+Here's an example of spawning a graph with each condition.
 
 ```elixir
-    {:ok, graph_entity_id} =
-      EcspanseStateMachine.SystemsApi.spawn_graph(
-        :battle_123,
-        :battle_start,
-        %{battle_entity_id: battle_entity.id}
-      )
-```
-
-`:battle_123` is the name of the graph. Graph names are atoms and needs to be unique and is one of the primary ways you'll interact with the state machine.
-
-`:battle_start` is the name of the node the graph will start in. That is, when you request a graph start, a transition to this node will happen. You will spawn this node in a moment.
-
-The last parameter, `%{battle_entity_id: battle_entity.id}`, is metadata you provide to the state machine. It can be `any()` data you want. This data will be provided back to you in events. This sample is from a system with many graphs running many battles. When a `NodeTransition` event is received, the metadata provides quick access to look up the battle.
-
-#### Spawn a node without a timer
-
-Here's an example of spawning a node into the graph without a timeout timer. You will need to request a node transition to move from this state to one of the exit states.
-
-```elixir
-    EcspanseStateMachine.SystemsApi.spawn_node(
-      graph_entity_id,
-      :action_phase_end,
-      [:decision_phase, :battle_end]
-    )
-```
-
-The graph*entity is returned from the spawn_graph call above. `:action_phase_end` is the name of the node. Node names must be atoms and must be unique \_within* a graph. `[:decision_phase, :battle_end]` are the allowed exit transitions, the names of the nodes you can transition to from this node.
-
-#### Spawn a node with a timeout timer ⏲️
-
-Here's an example of spawning a node into the graph with a timeout timer. You can request a node transition to move from this state to one of the exit states or a state transition will automatically occur if the timer elapses.
-
-```elixir
-    EcspanseStateMachine.SystemsApi.spawn_node(
-      graph_entity_id,
-      :combatants_attack,
-      [:combatants_move],
-      :timer.seconds(1),
-      :combatants_move
-    )
-```
-
-The first 3 parameters are the same as before. This node is named `:combatants_attack` and there is only one allowed exit node specified `[:combatants_move]`. This node will automatically transition to `:combatants_move` after `:timer.seconds(1)`. The fourth parameter, `:timer.seconds(1)`, is the timer duration and the final parameter, `:combatants_move`, is the timeout node name. The timeout node name must be in the list of allowed exists.
-
-### Validating your graph
-
-If your graph is invalid, it won't start. EcspanseStateMachine will validate your graph and report back errors.
-
-```elixir
-    case EcspanseStateMachine.Api.validate_graph(graph_entity_id) do
-      :ok -> IO.puts("Start your graph")
-      {:error, :not_found} -> IO.puts("graph not found")
-      {:error, reason} -> IO.puts("invalid :" <> reason)
+  graph_attrs = %Graph{
+      name: :battle_123,
+      starting_node: :battle_start,
+      metadata: %{battle_entity_id: "5dc3f158-d28c-4386-b54b-22606be5641b"},
+      auto_start: true,
+      nodes: [
+        %Node{
+          name: :battle_start,
+          exits_to: [:battle_end],
+          timer: %Timer{duration: :timer.seconds(3), exits_to: :battle_end}
+        },
+        %Node{
+          name: :battle_end,
+          exits_to: []
+        }
+  }
+  with {:ok, graph_entity_id} <- EcspanseStateMachine.spawn_graph(graph_attrs) do
+      IO.puts(EcspanseStateMachine.as_mermaid_diagram(graph_entity_id))
+    else
+      {:error, reason} ->
+        Logger.critical("Invalid Graph: #{reason}")
     end
 ```
 
+`:battle_123` is the name of the graph.
+
+`:battle_start` is the name of the node the graph transition to when it starts.
+
+The metadata, %{battle_entity_id: ...}, is metadata you provide to the state machine. It can be `any()` data you want. This data will be provided back to you in events. This sample is from a system with many graphs running many battles. When a `NodeTransition` event is received, the metadata provides quick access to look up the battle.
+
+When `auto_start` is true, the graph will be spawned and started if the graph is valid.
+
+:nodes is the list of states that make up your graph.
+
+The first node listed is :battle_start. When the state machine is in this state, you can transition to :battle_end. You could have many exits from a node. :battle_start also has a timer. After 3 seconds, it will transition to the timer's exits_to state.
+
+The last node, :battle_end has no exit nodes and does not have a timer.
+
 ### Start your graph
 
-Once you have spawned your graph and it's nodes, you set the state machine in motion by issuing a start graph request. The graph will transition into the starting node.
+You can `auto_start` your graph as shown above or, you set the state machine in motion by issuing a start graph request. The graph will transition into the starting node.
 
 ```elixir
-  EcspanseStateMachine.Api.submit_start_graph_request(graph_entity_id)
+  EcspanseStateMachine.submit_start_graph_request(graph_entity_id)
 ```
 
 #### graph start events
@@ -193,7 +170,7 @@ Node transitions happen when a node has a timeout and the timeout elapses or upo
 The request will be executed so long as the graph is running, the current node is the same as the from node, and the target node is in the list of allowed exit states from the current node.
 
 ```elixir
-  EcspanseStateMachine.Api.submit_node_transition_request(graph_entity_id, :turn_start, :decision_phase)
+  EcspanseStateMachine.submit_node_transition_request(graph_entity_id, :turn_start, :decision_phase)
 ```
 
 In this example, :turn_start is the from node name and :decision_phase is the target node name.
@@ -207,10 +184,34 @@ The graph will automatically stop when it reaches a node without allowed exit no
 You can stop a graph from running anytime by submitting a stop graph request.
 
 ```elixir
-  EcspanseStateMachine.Api.submit_stop_graph_request(graph_entity_id)
+  EcspanseStateMachine.submit_stop_graph_request(graph_entity_id)
 ```
 
 The graph will be stopped and if the timeout timer of current node will be stopped (provided it has one).
+
+#### graph stop events
+
+You can listen for graph stopped events.
+
+```elixir
+defmodule OnGraphStopped do
+  use Ecspanse.System,
+    event_subscriptions: [EcspanseStateMachine.Events.GraphStopped]
+
+  def run(
+        %EcspanseStateMachine.Events.GraphStopped{
+          entity_id: entity_id,
+          name: name,
+          metadata: metadata
+        },
+        _frame
+      ) do
+    IO.inspect(
+      "Graph #{entity_id}, #{name} stopped, metadata: #{inspect(metadata)}"
+    )
+  end
+end
+```
 
 ### Despawning a graph
 
@@ -225,7 +226,7 @@ The systems api has a function to despawn a graph and it's nodes.
 After you have spawned a graph, you can get a [Mermaid.js](https://mermaid.js.org/) state diagram for it.
 
 ```elixir
-  EcspanseStateMachine.Api.as_mermaid_diagram(graph_entity_id)
+  EcspanseStateMachine.as_mermaid_diagram(graph_entity_id)
 ```
 
 Here's an example output.
