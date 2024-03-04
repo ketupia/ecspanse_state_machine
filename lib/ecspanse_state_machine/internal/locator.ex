@@ -3,6 +3,7 @@ defmodule EcspanseStateMachine.Internal.Locator do
   Functions to find graphs and nodes
   """
   alias EcspanseStateMachine.Internal.Components
+  require Logger
 
   @spec fetch_graph_entity_for_node(Ecspanse.Entity.t()) ::
           {:ok, Ecspanse.Entity.t()} | {:error, :not_found}
@@ -28,13 +29,20 @@ defmodule EcspanseStateMachine.Internal.Locator do
   Fetches the node component in the graph by name
   """
   def fetch_node_component_by_name(graph_entity, node_name) do
-    node_component =
-      get_nodes(graph_entity)
-      |> Enum.find(&(&1.name == node_name))
+    nodes = get_nodes(graph_entity)
+
+    node_component = Enum.find(nodes, &(&1.name == node_name))
 
     case node_component do
-      nil -> {:error, :not_found}
-      node_component -> {:ok, node_component}
+      nil ->
+        Logger.error(
+          "No node named #{node_name} found in graph #{graph_entity.id}.  Known nodes are #{Enum.map_join(nodes, ", ", & &1.name)}"
+        )
+
+        {:error, :not_found}
+
+      node_component ->
+        {:ok, node_component}
     end
   end
 
