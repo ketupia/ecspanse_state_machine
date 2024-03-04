@@ -218,7 +218,7 @@ end
 The systems api has a function to despawn a graph and it's nodes.
 
 ```elixir
-    EcspanseStateMachine.SystemsApi.despawn_graph(graph_entity_id)
+    EcspanseStateMachine.despawn_graph(graph_entity_id)
 ```
 
 ## Generate a Mermaid State Diagram

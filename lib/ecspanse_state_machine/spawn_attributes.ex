@@ -54,8 +54,9 @@ defmodule EcspanseStateMachine.SpawnAttributes do
 
       with :ok <- validate_unique_node_names(node_names),
            :ok <- validate_starting_node_exist(node_names, graph.starting_node),
-           :ok <- validate_exit_nodes(node_names, graph.nodes),
-           :ok <- validate_timer_exits(node_names, graph.nodes),
+           :ok <- validate_exit_nodes_exist(node_names, graph.nodes),
+           :ok <- validate_timer_exits_exist(node_names, graph.nodes),
+           :ok <- validate_timer_exit_in_node_exits(graph.nodes),
            :ok <- validate_all_nodes_reachable(node_names, graph.nodes, graph.starting_node) do
         :ok
       end
@@ -97,7 +98,24 @@ defmodule EcspanseStateMachine.SpawnAttributes do
       end
     end
 
-    defp validate_timer_exits(node_names, nodes) do
+    defp validate_timer_exit_in_node_exits(nodes) do
+      bad_nodes =
+        nodes
+        |> Enum.reject(&(&1.timer == nil || Enum.member?(&1.exits_to, &1.timer.exits_to)))
+
+      if Enum.empty?(bad_nodes) do
+        :ok
+      else
+        {:error,
+         Enum.map_join(
+           bad_nodes,
+           ", ",
+           &"Timer exit node #{&1.timer.exits_to} is not in the node's exits #{Enum.join(&1.exits_to, ", ")}"
+         )}
+      end
+    end
+
+    defp validate_timer_exits_exist(node_names, nodes) do
       missing_timer_exit_reasons =
         nodes
         |> Enum.reject(&(&1.timer == nil || Enum.member?(node_names, &1.timer.exits_to)))
@@ -114,7 +132,7 @@ defmodule EcspanseStateMachine.SpawnAttributes do
       end
     end
 
-    defp validate_exit_nodes(node_names, nodes) do
+    defp validate_exit_nodes_exist(node_names, nodes) do
       missing_exit_nodes_map =
         nodes
         |> Enum.reduce(%{}, fn node, acc ->

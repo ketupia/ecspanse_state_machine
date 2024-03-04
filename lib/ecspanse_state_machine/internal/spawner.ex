@@ -8,6 +8,8 @@ defmodule EcspanseStateMachine.Internal.Spawner do
 
   @spec spawn_graph(EcspanseStateMachine.SpawnAttributes.Graph.t()) ::
           {:ok, Ecspanse.Entity.id()} | {:error, String.t()}
+  def spawn_graph(nil), do: {:error, "Graph cannot be nil"}
+
   def spawn_graph(graph_attributes) do
     with :ok <- EcspanseStateMachine.SpawnAttributes.Graph.validate(graph_attributes) do
       graph_entity =
