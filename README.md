@@ -130,7 +130,7 @@ The State timer component adds changing state on timeout. You add it to your ent
 
 Now your state machine will automatically change states when timeouts occur. In this example, :red will transition to :green after 30 seconds.
 
-**_NOTE:_** You can still change state through the api before the timer elapses.
+**_note:_** You can still change state through the api before the timer elapses.
 
 ### Listen for state changes
 

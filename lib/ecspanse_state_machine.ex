@@ -11,8 +11,8 @@ defmodule EcspanseStateMachine do
   @doc """
   Generates the source for a Mermaid State Diagram
   """
-  def as_mermaid_diagram(entity_id) do
-    Internal.Mermaid.as_state_diagram(entity_id)
+  def as_mermaid_diagram(entity_id, title \\ nil) do
+    Internal.Mermaid.as_state_diagram(entity_id, title)
   end
 
   @spec change_state(Ecspanse.Entity.id(), atom(), atom(), atom()) ::

@@ -5,10 +5,27 @@ defmodule EcspanseStateMachine.Internal.Mermaid do
   alias EcspanseStateMachine.Components
   require Logger
 
-  @spec as_state_diagram(Ecspanse.Entity.id()) :: String.t() | {:error, :not_found}
-  def as_state_diagram(entity_id) do
-    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
-         {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
+  @spec as_state_diagram(Ecspanse.Entity.id(), String.t()) :: String.t() | {:error, :not_found}
+  def as_state_diagram(entity_id, title \\ nil) do
+    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id) do
+      "stateDiagram-v2
+#{title_block(title)}
+#{transitions_block(entity)}"
+    end
+  end
+
+  defp title_block(title) do
+    if title == nil do
+      ""
+    else
+      "---
+title: #{title}
+---"
+    end
+  end
+
+  defp transitions_block(entity) do
+    with {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
       transitions = state_machine_transitions(state_machine)
 
       transitions =
@@ -21,11 +38,9 @@ defmodule EcspanseStateMachine.Internal.Mermaid do
           transitions
         end
 
-      "stateDiagram-v2
-" <>
-        (transitions
-         |> Enum.sort(&transition_sort_fn/2)
-         |> Enum.map_join("\n", &format_transition/1))
+      transitions
+      |> Enum.sort(&transition_sort_fn/2)
+      |> Enum.map_join("\n", &format_transition/1)
     end
   end
 

@@ -6,6 +6,7 @@ defmodule MermaidTest do
   defmodule EcspanseTest do
     @moduledoc false
     use Ecspanse
+
     @impl true
     def setup(data) do
       data
@@ -17,24 +18,43 @@ defmodule MermaidTest do
     Ecspanse.System.debug()
   end
 
-  test "red light" do
-    entity =
-      Ecspanse.Command.spawn_entity!({
-        Ecspanse.Entity,
-        components: [
-          EcspanseStateMachine.state_machine(
-            :red,
-            [
-              [name: :red, exits_to: [:green]],
-              [name: :green, exits_to: [:yellow]],
-              [name: :yellow, exits_to: [:red]]
-            ]
-          )
-        ]
-      })
+  describe "taffic light diagram source" do
+    test "has diagram type" do
+      entity = Examples.traffic_light()
+      mermaid = EcspanseStateMachine.as_mermaid_diagram(entity.id)
+      assert mermaid =~ "stateDiagram-v2"
+      Ecspanse.Command.despawn_entity!(entity)
+    end
 
-    mermaid = EcspanseStateMachine.as_mermaid_diagram(entity.id)
+    test "has title" do
+      entity = Examples.traffic_light()
+      mermaid = EcspanseStateMachine.as_mermaid_diagram(entity.id, "traffic light")
+      assert mermaid =~ "title"
+      assert mermaid =~ "traffic light"
+      Ecspanse.Command.despawn_entity!(entity)
+    end
 
-    assert mermaid =~ "stateDiagram-v2"
+    test "has transitions" do
+      entity = Examples.traffic_light()
+      mermaid = EcspanseStateMachine.as_mermaid_diagram(entity.id)
+      assert mermaid =~ "[*] --> red"
+      assert mermaid =~ "green --> yellow"
+      assert mermaid =~ "yellow --> red"
+      assert mermaid =~ "red --> green"
+      assert mermaid =~ "red --> flashing_red"
+      assert mermaid =~ "flashing_red --> red"
+      Ecspanse.Command.despawn_entity!(entity)
+    end
+  end
+
+  describe "taffic light with timer diagram source" do
+    test "has timeout indicators" do
+      entity = Examples.traffic_light_with_timer()
+      mermaid = EcspanseStateMachine.as_mermaid_diagram(entity.id)
+      assert mermaid =~ "green --> yellow: ⏲️"
+      assert mermaid =~ "yellow --> red: ⏲️"
+      assert mermaid =~ "red --> green: ⏲️"
+      Ecspanse.Command.despawn_entity!(entity)
+    end
   end
 end

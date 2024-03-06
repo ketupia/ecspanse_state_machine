@@ -1,8 +1,6 @@
 defmodule StateMachineComponentValidationTest do
   use ExUnit.Case, async: false
 
-  alias EcspanseStateMachine.StateMachine.Components.StateMachine
-
   @moduledoc false
 
   defmodule EcspanseTest do
