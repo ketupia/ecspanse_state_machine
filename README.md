@@ -26,7 +26,7 @@ by adding `ecspanse_state_machine` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:ecspanse_state_machine, "~> 0.1.0"}
+    {:ecspanse_state_machine, "~> 0.2.0"}
   ]
 end
 ```
@@ -64,7 +64,7 @@ ECSpanseStateMachine will add the systems it needs for you.
 
 ### Adding a state machine
 
-The state machine is an ECSpanse component. You add it to your entity's spec in the components list. EcspanseStateMachine.state_machine is a convenience API function to create the state machine component.
+The state machine is an ECSpanse component. You add it to your entity's spec in the components list. `EcspanseStateMachine.state_machine` is a convenience API function to create the state machine component.
 
 ```elixir
     traffic_light =
@@ -83,7 +83,7 @@ The state machine is an ECSpanse component. You add it to your entity's spec in 
 
 ### Starting your state machine
 
-The default behavior is to automatically start a state machine. If you don't want that behavior, then you can 'set auto_start to false' and call 'EcspanseStateMachine.start' when you're ready.
+The default behavior is to automatically start a state machine. If you don't want that behavior, then you can 'set auto_start to false' and call `EcspanseStateMachine.start` when you're ready.
 
 Auto start is the third parameter to EcspanseStateMachine.state_machine().
 
@@ -107,7 +107,7 @@ Auto start is the third parameter to EcspanseStateMachine.state_machine().
 
 ### Adding timeouts
 
-State timer is another component. You add it to your entity's spec in the components list just like you did with the state machine. EcspanseStateMachine.state_timer is a convenience API function to create the state state timer component.
+The State timer component adds changing state on timeout. You add it to your entity's spec in the components list just like you did with the state machine. `EcspanseStateMachine.state_timer` is a convenience API function to create the state timer component.
 
 ```elixir
     traffic_light_with_timer =
@@ -131,7 +131,7 @@ State timer is another component. You add it to your entity's spec in the compon
 
 Now your state machine will automatically change states when timeouts occur. In this example, :red will transition to :green after 30 seconds.
 
-You can still change state through the api before the timer elapses.
+**_NOTE:_** You can still change state through the api before the timer elapses.
 
 #### graph start events
 

@@ -1,7 +1,5 @@
-defmodule StateMachineComponentValidationTest do
+defmodule MermaidTest do
   use ExUnit.Case, async: false
-
-  alias EcspanseStateMachine.StateMachine
 
   @moduledoc false
 
@@ -20,26 +18,23 @@ defmodule StateMachineComponentValidationTest do
   end
 
   test "red light" do
-    my_entity =
+    entity =
       Ecspanse.Command.spawn_entity!({
         Ecspanse.Entity,
         components: [
-          {StateMachine.Components.StateMachine,
-           [
-             initial_state: :red,
-             states: [
-               [name: :red, exits_to: [:green]],
-               [name: :green, exits_to: [:yellow]],
-               [name: :yellow, exits_to: [:red]]
-             ]
-           ]}
+          EcspanseStateMachine.state_machine(
+            :red,
+            [
+              [name: :red, exits_to: [:green]],
+              [name: :green, exits_to: [:yellow]],
+              [name: :yellow, exits_to: [:red]]
+            ]
+          )
         ]
       })
 
-    mermaid = EcspanseStateMachine.as_mermaid_diagram(my_entity)
+    mermaid = EcspanseStateMachine.as_mermaid_diagram(entity.id)
 
-    IO.inspect(mermaid)
-
-    assert mermaid != ""
+    assert mermaid =~ "stateDiagram-v2"
   end
 end
