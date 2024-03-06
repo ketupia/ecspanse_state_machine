@@ -40,9 +40,8 @@ end
 3. [Starting your state machine](#starting-your-state-machine)
 4. [Adding timeouts](#adding-timeouts)
 5. [Listen for state changes](#listen-for-state-changes)
-6. [Request a node transition](#request-a-node-transition)
-7. [Stopping a graph](#stopping-a-graph)
-8. [Despawning a graph](#despawning-a-graph)
+6. [Request a state change](#request-a-state-change)
+7. [Stopping a state machine](#stopping-a-state-machine)
 
 ### Register ESCpanseStateMachine Systems
 
@@ -133,30 +132,6 @@ Now your state machine will automatically change states when timeouts occur. In 
 
 **_NOTE:_** You can still change state through the api before the timer elapses.
 
-#### graph start events
-
-You can listen for graph started events.
-
-```elixir
-defmodule OnGraphStarted do
-  use Ecspanse.System,
-    event_subscriptions: [EcspanseStateMachine.Events.GraphStarted]
-
-  def run(
-        %EcspanseStateMachine.Events.GraphStarted{
-          entity_id: entity_id,
-          name: name,
-          metadata: metadata
-        },
-        _frame
-      ) do
-    IO.inspect(
-      "Graph #{entity_id}, #{name} started, metadata: #{inspect(metadata)}"
-    )
-  end
-end
-```
-
 ### Listen for state changes
 
 ECSpanseStateMachine publishes `Started`, `Stopped`, and `StateChanged` events. State changed is the primary event. It's your chance to take action after a transition.
@@ -168,7 +143,7 @@ defmodule OnStateChanged do
 
   def run(
         %EcspanseStateMachine.Events.StateChanged{
-          entity_id: graph_entity_id,
+          entity_id: entity_id,
           from: from,
           to: to,
           trigger: _trigger
@@ -192,21 +167,19 @@ Here were changing state from :red to :flashing_red.
 
 <!-- MDOC !-->
 
-### Stopping a graph
+### Stopping a state machine
 
-The graph will automatically stop when it reaches a state without allowed exit node names.
+The state machine will automatically stop when it reaches a state no exits.
 
-You can stop a graph from running anytime by submitting a stop graph request.
+You can stop a state machine anytime by calling `ECSpanseStateMachine.stop`.
 
 ```elixir
   EcspanseStateMachine.stop(entity_id)
 ```
 
-The graph will be stopped and if the timeout timer of current node will be stopped (provided it has one).
-
 ## Generate a Mermaid State Diagram
 
-ECSpanseStateMachine can generate a [Mermaid.js](https://mermaid.js.org/) state diagram for your graph.
+ECSpanseStateMachine can generate a [Mermaid.js](https://mermaid.js.org/) state diagram for your state machines and state timers.
 
 ```elixir
   EcspanseStateMachine.as_mermaid_diagram(entity_id)
