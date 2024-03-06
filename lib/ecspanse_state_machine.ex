@@ -2,32 +2,36 @@ defmodule EcspanseStateMachine do
   @moduledoc """
   `EcspanseStateMachine`.
   """
-  alias EcspanseStateMachine.Internal.Events
-  alias EcspanseStateMachine.Internal.Mermaid
-  alias EcspanseStateMachine.Internal.Spawner
-  alias EcspanseStateMachine.Internal.Systems
   alias EcspanseStateMachine.Projections
+  alias EcspanseStateMachine.Components
+  alias EcspanseStateMachine.Internal
 
   @spec as_mermaid_diagram(Ecspanse.Entity.id()) ::
           {:ok, String.t()} | {:error, :not_found}
   @doc """
   Generates the source for a Mermaid State Diagram
   """
-  def as_mermaid_diagram(graph_entity_id) do
-    with {:ok, graph_entity} <- Ecspanse.Entity.fetch(graph_entity_id) do
-      Mermaid.as_state_diagram(graph_entity)
-    end
+  def as_mermaid_diagram(entity_id) do
+    Internal.Mermaid.as_state_diagram(entity_id)
   end
 
-  @spec despawn_graph(Ecspanse.Entity.id()) :: :ok | {:error, :not_found}
+  @spec change_state(Ecspanse.Entity.id(), atom(), atom(), atom()) ::
+          :ok | {:error, :not_found}
   @doc """
-  Deletes (despawns) a graph.
-  * This can only be called from inside an ECSpanse system
-  * it is recommended to run this function in a synchronous system
+  Submits a request to change state
   """
-  def despawn_graph(graph_entity_id) do
-    with {:ok, graph_entity} <- Ecspanse.Entity.fetch(graph_entity_id) do
-      Spawner.despawn_graph(graph_entity)
+  def change_state(entity_id, from, to, trigger \\ :request) do
+    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
+         {:ok, _state_machine} <- Components.StateMachine.fetch(entity) do
+      Ecspanse.event(
+        {Internal.Events.ChangeStateRequest,
+         [
+           entity_id: entity_id,
+           from: from,
+           to: to,
+           trigger: trigger
+         ]}
+      )
     end
   end
 
@@ -37,76 +41,82 @@ defmodule EcspanseStateMachine do
   @spec setup(Ecspanse.Data.t()) :: Ecspanse.Data.t()
   def setup(data) do
     data
-    |> Ecspanse.add_frame_start_system(Systems.OnNodeTimeout)
-    |> Ecspanse.add_frame_start_system(Systems.OnNodeTransitionRequest)
-    |> Ecspanse.add_frame_start_system(Systems.OnStartGraphRequest)
-    |> Ecspanse.add_frame_start_system(Systems.OnStopGraphRequest)
+    |> Ecspanse.add_frame_start_system(Internal.Systems.AutoStarter)
+    |> Ecspanse.add_frame_start_system(Internal.Systems.OnChangeStateRequest)
+    |> Ecspanse.add_frame_start_system(Internal.Systems.OnStartRequest)
+    |> Ecspanse.add_frame_start_system(Internal.Systems.OnStopRequest)
+    |> Ecspanse.add_frame_start_system(Internal.Systems.OnStateChanged)
+    |> Ecspanse.add_frame_start_system(Internal.Systems.OnStopped)
+    |> Ecspanse.add_frame_start_system(Internal.Systems.OnStateTimeout)
   end
 
-  @spec spawn_graph(EcspanseStateMachine.SpawnAttributes.Graph.t()) ::
-          {:ok, Ecspanse.Entity.id()} | {:error, String.t()}
-  @doc """
-   Creates (spawns) a graph.
-  * This can only be called from inside an ECSpanse system
-  * it is recommended to run this function in a synchronous system
-  returns the entity_id
-  """
-  def spawn_graph(graph_attributes) do
-    Spawner.spawn_graph(graph_attributes)
-  end
-
-  @spec submit_node_transition_request(Ecspanse.Entity.id(), atom(), atom(), atom()) ::
+  @spec start(Ecspanse.Entity.id()) ::
           :ok | {:error, :not_found}
   @doc """
-  Submits a request to transition to the target node name
+  Starts a state machine
   """
-  def submit_node_transition_request(
-        graph_entity_id,
-        from_node_name,
-        to_node_name,
-        reason \\ :request
-      ) do
-    Ecspanse.event(
-      {Events.NodeTransitionRequest,
-       [
-         graph_entity_id: graph_entity_id,
-         from_node_name: from_node_name,
-         to_node_name: to_node_name,
-         reason: reason
-       ]}
-    )
+  def start(entity_id) do
+    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
+         {:ok, _state_machine} <- Components.StateMachine.fetch(entity) do
+      Ecspanse.event({Internal.Events.StartRequest, [entity_id: entity_id]})
+    end
   end
 
-  @spec submit_start_graph_request(Ecspanse.Entity.id()) ::
+  @spec state_machine(atom(), list(Keyword.t()), boolean()) ::
+          Ecspanse.Component.component_spec()
+  @doc """
+  Creates and returns a component_spec for a State Machine
+  """
+  def state_machine(initial_state, states, auto_start \\ true) do
+    {Components.StateMachine,
+     [initial_state: initial_state, states: states, auto_start: auto_start]}
+  end
+
+  @spec state_timer(list(Keyword.t())) ::
+          Ecspanse.Component.component_spec()
+  @doc """
+  Creates and returns a component_spec for a State Timer
+  """
+  def state_timer(timeouts) do
+    {Components.StateTimer, [timeouts: timeouts]}
+  end
+
+  @spec stop(Ecspanse.Entity.id()) ::
           :ok | {:error, :not_found}
   @doc """
-  Submits a request to start the graph running
+  Stops a state machine
   """
-  def submit_start_graph_request(graph_entity_id) do
-    Ecspanse.event({Events.StartGraphRequest, [entity_id: graph_entity_id]})
+  def stop(entity_id) do
+    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
+         {:ok, _state_machine} <- Components.StateMachine.fetch(entity) do
+      Ecspanse.event({Internal.Events.StopRequest, [entity_id: entity_id]})
+    end
   end
 
-  @spec submit_stop_graph_request(Ecspanse.Entity.id()) ::
-          :ok | {:error, :not_found}
+  # @spec project(Ecspanse.Entity.id()) ::
+  #         {:ok, {Projections.StateMachine.project(t(), Projections.State} | {:error, :not_found}
   @doc """
-  Submits a request to stop the graph running
+  Returns a projection of the state machine
   """
-  def submit_stop_graph_request(graph_entity_id) do
-    Ecspanse.event({Events.StopGraphRequest, [entity_id: graph_entity_id]})
+  def project(entity_id) when is_binary(entity_id) do
+    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id) do
+      project(entity)
+    end
   end
 
-  @spec project(Ecspanse.Entity.id()) ::
-          {:ok, Projections.Graph.t()} | {:error, :not_found}
-  @doc """
-  Retrieves the projection of the graph
-  """
-  def project(graph_entity_id) do
-    Projections.Graph.project(%{entity_id: graph_entity_id})
-  end
+  def project(entity) do
+    state_machine_projection =
+      case Projections.StateMachine.project(%{entity_id: entity.id}) do
+        {:ok, projection} -> projection
+        _ -> nil
+      end
 
-  @spec validate_graph(EcspanseStateMachine.SpawnAttributes.Graph.t()) ::
-          :ok | {:error, String.t()}
-  def validate_graph(graph_attributes) do
-    EcspanseStateMachine.SpawnAttributes.Graph.validate(graph_attributes)
+    state_timer_projection =
+      case Projections.StateTimer.project(%{entity_id: entity.id}) do
+        {:ok, projection} -> projection
+        _ -> nil
+      end
+
+    {state_machine_projection, state_timer_projection}
   end
 end

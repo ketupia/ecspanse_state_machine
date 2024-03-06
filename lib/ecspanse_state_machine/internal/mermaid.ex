@@ -1,48 +1,96 @@
 defmodule EcspanseStateMachine.Internal.Mermaid do
   @moduledoc """
-  Converts a graph and it's nodes into the source for a Mermaid state diagram
+  Produces the definition of a Mermaid.js state diagram from a state_machine
   """
-  alias EcspanseStateMachine.Internal.Components
-  alias EcspanseStateMachine.Internal.Locator
-  alias EcspanseStateMachine.Internal.GraphFlattener
+  alias EcspanseStateMachine.Components
+  require Logger
 
-  @spec as_state_diagram(Ecspanse.Entity.t()) :: String.t()
-  def as_state_diagram(graph_entity) do
-    with {:ok, graph_component} <- Components.Graph.fetch(graph_entity) do
-      node_transitions_map =
-        Locator.get_nodes(graph_entity)
-        |> Enum.into(%{}, &{&1.name, encode_transitions(&1)})
+  @spec as_state_diagram(Ecspanse.Entity.id()) :: String.t() | {:error, :not_found}
+  def as_state_diagram(entity_id) do
+    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
+         {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
+      transitions = state_machine_transitions(state_machine)
 
-      flattened_node_names = GraphFlattener.flatten(graph_entity)
+      transitions =
+        if Ecspanse.Query.has_component?(entity, Components.StateTimer) do
+          {:ok, timer} =
+            Ecspanse.Query.fetch_component(entity, Components.StateTimer)
 
-      node_transitions =
-        Enum.map_join(flattened_node_names, "\n", &Map.get(node_transitions_map, &1))
+          add_timeout_transitions(timer.timeouts, transitions)
+        else
+          transitions
+        end
 
-      "---
-title: #{graph_component.name}
----
-stateDiagram-v2
-  [*] --> #{graph_component.starting_node_name}
-#{node_transitions}
-"
+      "stateDiagram-v2
+" <>
+        (transitions
+         |> Enum.sort(&transition_sort_fn/2)
+         |> Enum.map_join("\n", &format_transition/1))
     end
   end
 
-  defp encode_transitions(node_component) do
-    if is_nil(node_component.allowed_exit_node_names) ||
-         Enum.empty?(node_component.allowed_exit_node_names) do
-      "  #{node_component.name} --> [*]"
-    else
-      node_component.allowed_exit_node_names
-      |> Enum.map_join("\n", &encode_transition(node_component, &1))
+  defp transition_sort_fn(a, b) do
+    case {a[:from], a[:to], b[:from], b[:to]} do
+      {"[*]", _, _, _} ->
+        true
+
+      {_, "[*]", _, _} ->
+        false
+
+      {_, _, "[*]", _} ->
+        false
+
+      {_, _, _, "[*]"} ->
+        true
+
+      {a_from, a_to, b_from, b_to} ->
+        case Atom.to_string(a_from) == Atom.to_string(b_from) do
+          true -> Atom.to_string(a_to) < Atom.to_string(b_to)
+          false -> Atom.to_string(a_from) < Atom.to_string(b_from)
+        end
     end
   end
 
-  defp encode_transition(node_component, exit_node_name) do
-    if node_component.has_timer and node_component.timeout_node_name == exit_node_name do
-      "  #{node_component.name} --> #{exit_node_name}: ⏲️"
-    else
-      "  #{node_component.name} --> #{exit_node_name}"
-    end
+  defp add_timeout_transitions(timeouts, transitions) do
+    Enum.reduce(timeouts, transitions, fn timeout, acc ->
+      existing_transition =
+        Enum.find(acc, &(&1[:from] == timeout[:name] and &1[:to] == timeout[:exits_to]))
+
+      acc =
+        if existing_transition do
+          List.delete(acc, existing_transition)
+        else
+          acc
+        end
+
+      List.insert_at(acc, 0, from: timeout[:name], to: timeout[:exits_to], timeout: true)
+    end)
+  end
+
+  defp format_transition(transition) do
+    "  #{transition[:from]} --> #{transition[:to]}" <>
+      if transition[:timeout] do
+        ": ⏲️"
+      else
+        ""
+      end
+  end
+
+  defp state_machine_transitions(state_machine) do
+    Enum.reduce(state_machine.states, [], fn state, acc ->
+      if is_nil(state[:exits_to]) || Enum.empty?(state[:exits_to]) do
+        List.insert_at(acc, 0, Keyword.new(from: state[:name], to: "[*]", timeout: false))
+      else
+        Enum.reduce(
+          state[:exits_to],
+          acc,
+          &List.insert_at(&2, 0, Keyword.new(from: state[:name], to: &1, timeout: false))
+        )
+      end
+    end)
+    |> List.insert_at(
+      0,
+      Keyword.new(from: "[*]", to: state_machine.initial_state, timeout: false)
+    )
   end
 end

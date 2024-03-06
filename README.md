@@ -4,16 +4,16 @@
 
 `ECSpanse State Machine` is a state machine implementation for [`ECSpanse`](https://hexdocs.pm/ecspanse).
 
-[![](https://mermaid.ink/img/pako:eNp1kEFuwjAQRa9izbLCUkmhRV6w4gYs6yqa2AONiB3kTKpWiDNwF1acpxfoFTqOioJadWN7_vsjff8DuNYTGNBa28g1N2RUhSx3WWGFtKic3tzLMZvNpxrnjwvtcVo8EBUO8cnGYbFjZFrVuE0Y9Ftho1LPdy9K66XiPsVSeOKsjtMAt4kieupKet83EsSoz9P563LK1t9sWHBtkHQYuSslJLrd7cYfOAag6G-dV-2_hFf004SMGY3TAOWHWYUJBEoBay81HrJigV8pkAUjT49pZ8HGo_iw53b9ER0YTj1NoN_7sTcwG2w6On4DXdGPHQ?type=png)](https://mermaid.live/edit#pako:eNp1kEFuwjAQRa9izbLCUkmhRV6w4gYs6yqa2AONiB3kTKpWiDNwF1acpxfoFTqOioJadWN7_vsjff8DuNYTGNBa28g1N2RUhSx3WWGFtKic3tzLMZvNpxrnjwvtcVo8EBUO8cnGYbFjZFrVuE0Y9Ftho1LPdy9K66XiPsVSeOKsjtMAt4kieupKet83EsSoz9P563LK1t9sWHBtkHQYuSslJLrd7cYfOAag6G-dV-2_hFf004SMGY3TAOWHWYUJBEoBay81HrJigV8pkAUjT49pZ8HGo_iw53b9ER0YTj1NoN_7sTcwG2w6On4DXdGPHQ)
+[![](https://mermaid.ink/img/pako:eNpNkD0OwjAMha8SeUTtwpiBiZWJkSBkNW4bkR-UpqCq6hl6FybOwwW4Ammrqtn8vvcs-bmHwkkCDk3AQEeFlUeTP_fCMnbZXVmeH5gnOclSY1MrW92iTvkqU3_iHWntXmuSs-_4_n3GdKPyRDY1ZjBby_LmQQaGvEEl4639lBUQajIkgMdRor8LEHaIOWyDO3e2AB58Sxm0D7lVA16ibiIlqYLzp6X8_IPhD-E_XkE?type=png)](https://mermaid.live/edit#pako:eNpNkD0OwjAMha8SeUTtwpiBiZWJkSBkNW4bkR-UpqCq6hl6FybOwwW4Ammrqtn8vvcs-bmHwkkCDk3AQEeFlUeTP_fCMnbZXVmeH5gnOclSY1MrW92iTvkqU3_iHWntXmuSs-_4_n3GdKPyRDY1ZjBby_LmQQaGvEEl4639lBUQajIkgMdRor8LEHaIOWyDO3e2AB58Sxm0D7lVA16ibiIlqYLzp6X8_IPhD-E_XkE)
 
 <!-- MDOC !-->
 
 ## Features
 
-- Multiple graphs executing simultaneously - create, start, and stop independently
-- Graph validation - all nodes defined and reachable
-- Node transitions on request or timeout
-- Register for Node transition events
+- Every entity can have a state machine executing simultaneously - create, start, and stop independently
+- Validation - all states must be defined and reachable
+- State changes on request or timeout
+- Register for State Change events
 - Mermaid state diagram generation
 
 <!-- MDOC !-->
@@ -35,15 +35,16 @@ end
 
 ## How to use
 
-1. [Register the state machine's ECSpanse systems](#register-escpanse-state-machine-systems)
-2. [Spawn a graph](#spawn-a-graph)
-3. [Start your graph](#start-your-graph)
-4. [Listen for node transitions](#listen-for-node-transitions)
-5. [Request a node transition](#request-a-node-transition)
-6. [Stopping a graph](#stopping-a-graph)
-7. [Despawning a graph](#despawning-a-graph)
+1. [Register the state machine's ECSpanse systems](#register-escpansestatemachine-systems)
+2. [Adding a state machine](#adding-a-state-machine)
+3. [Starting your state machine](#starting-your-state-machine)
+4. [Adding timeouts](#adding-timeouts)
+5. [Listen for state changes](#listen-for-state-changes)
+6. [Request a node transition](#request-a-node-transition)
+7. [Stopping a graph](#stopping-a-graph)
+8. [Despawning a graph](#despawning-a-graph)
 
-### Register ESCpanse State Machine Systems
+### Register ESCpanseStateMachine Systems
 
 As part of your ESCpanse setup, you will have defined a `manager` with a `setup(data)` function. In that function, chain a call to `ESCpanseStateMachine.setup`
 
@@ -61,58 +62,76 @@ As part of your ESCpanse setup, you will have defined a `manager` with a `setup(
 
 ECSpanseStateMachine will add the systems it needs for you.
 
-### Spawn a graph
+### Adding a state machine
 
-A graph is a collection of nodes along with some state such as the starting node name and is running. Nodes represent the states in the state machine. Nodes have a name, a list of allowed exit transitions, and may have a timeout timer.
-
-Here's an example of spawning a graph with each condition.
+The state machine is an ECSpanse component. You add it to your entity's spec in the components list. EcspanseStateMachine.state_machine is a convenience API function to create the state machine component.
 
 ```elixir
-  graph_attrs = %Graph{
-      name: :battle_123,
-      starting_node: :battle_start,
-      metadata: %{battle_entity_id: "5dc3f158-d28c-4386-b54b-22606be5641b"},
-      auto_start: true,
-      nodes: [
-        %Node{
-          name: :battle_start,
-          exits_to: [:battle_end],
-          timer: %Timer{duration: :timer.seconds(3), exits_to: :battle_end}
-        },
-        %Node{
-          name: :battle_end,
-          exits_to: []
-        }
-  }
-  with {:ok, graph_entity_id} <- EcspanseStateMachine.spawn_graph(graph_attrs) do
-      IO.puts(EcspanseStateMachine.as_mermaid_diagram(graph_entity_id))
-    else
-      {:error, reason} ->
-        Logger.critical("Invalid Graph: #{reason}")
-    end
+    traffic_light =
+      Ecspanse.Command.spawn_entity!({
+        Ecspanse.Entity,
+        components: [
+          EcspanseStateMachine.state_machine(:red, [
+            [name: :red, exits_to: [:green, :flashing_red]],
+            [name: :flashing_red, exits_to: [:red]],
+            [name: :green, exits_to: [:yellow]],
+            [name: :yellow, exits_to: [:red]]
+          ])
+        ]
+      })
 ```
 
-`:battle_123` is the name of the graph.
+### Starting your state machine
 
-`:battle_start` is the name of the node the graph transition to when it starts.
+The default behavior is to automatically start a state machine. If you don't want that behavior, then you can 'set auto_start to false' and call 'EcspanseStateMachine.start' when you're ready.
 
-The metadata, %{battle_entity_id: ...}, is metadata you provide to the state machine. It can be `any()` data you want. This data will be provided back to you in events. This sample is from a system with many graphs running many battles. When a `NodeTransition` event is received, the metadata provides quick access to look up the battle.
-
-When `auto_start` is true, the graph will be spawned and started if the graph is valid.
-
-:nodes is the list of states that make up your graph.
-
-The first node listed is :battle_start. When the state machine is in this state, you can transition to :battle_end. You could have many exits from a node. :battle_start also has a timer. After 3 seconds, it will transition to the timer's exits_to state.
-
-The last node, :battle_end has no exit nodes and does not have a timer.
-
-### Start your graph
-
-You can `auto_start` your graph as shown above or, you set the state machine in motion by issuing a start graph request. The graph will transition into the starting node.
+Auto start is the third parameter to EcspanseStateMachine.state_machine().
 
 ```elixir
-  EcspanseStateMachine.submit_start_graph_request(graph_entity_id)
+    traffic_light =
+      Ecspanse.Command.spawn_entity!({
+        Ecspanse.Entity,
+        components: [
+          EcspanseStateMachine.state_machine(:red, [
+            [name: :red, exits_to: [:green, :flashing_red]],
+            [name: :flashing_red, exits_to: [:red]],
+            [name: :green, exits_to: [:yellow]],
+            [name: :yellow, exits_to: [:red]]
+          ], false)
+        ]
+      })
+
+  # some time later
+  EcspanseStateMachine.start(traffic_light.id)
 ```
+
+### Adding timeouts
+
+State timer is another component. You add it to your entity's spec in the components list just like you did with the state machine. EcspanseStateMachine.state_timer is a convenience API function to create the state state timer component.
+
+```elixir
+    traffic_light_with_timer =
+      Ecspanse.Command.spawn_entity!({
+        Ecspanse.Entity,
+        components: [
+          EcspanseStateMachine.state_machine(:red, [
+            [name: :red, exits_to: [:green, :flashing_red]],
+            [name: :flashing_red, exits_to: [:red]],
+            [name: :green, exits_to: [:yellow]],
+            [name: :yellow, exits_to: [:red]]
+          ]),
+          EcspanseStateMachine.state_timer([
+            [name: :red, duration: :timer.seconds(30), exits_to: :green],
+            [name: :green, duration: :timer.seconds(10), exits_to: :yellow],
+            [name: :yellow, duration: :timer.seconds(5), exits_to: :red]
+          ])
+        ]
+      })
+```
+
+Now your state machine will automatically change states when timeouts occur. In this example, :red will transition to :green after 30 seconds.
+
+You can still change state through the api before the timer elapses.
 
 #### graph start events
 
@@ -138,23 +157,21 @@ defmodule OnGraphStarted do
 end
 ```
 
-### Listen for node transitions
+### Listen for state changes
 
-You'll create ECSpanse event subscriptions for EcspanseStateMachine.Events.NodeTransition events.
+ECSpanseStateMachine publishes `Started`, `Stopped`, and `StateChanged` events. State changed is the primary event. It's your chance to take action after a transition.
 
 ```elixir
-defmodule OnNodeTransition do
+defmodule OnStateChanged do
   use Ecspanse.System,
-    event_subscriptions: [EcspanseStateMachine.Events.NodeTransition]
+    event_subscriptions: [EcspanseStateMachine.Events.StateChanged]
 
   def run(
-        %EcspanseStateMachine.Events.NodeTransition{
-          graph_entity_id: graph_entity_id,
-          graph_name: graph_name,
-          graph_metadata: graph_metadata,
-          from_node_name: from_node_name,
-          to_node_name: to_node_name,
-          reason: _reason
+        %EcspanseStateMachine.Events.StateChanged{
+          entity_id: graph_entity_id,
+          from: from,
+          to: to,
+          trigger: _trigger
         },
         _frame
       ) do
@@ -163,88 +180,50 @@ defmodule OnNodeTransition do
 end
 ```
 
-### Request a node transition
+### Request a state change
 
-Node transitions happen when a node has a timeout and the timeout elapses or upon request. Submitting a request will cause the graph to transition from the current node to the target node.
-
-The request will be executed so long as the graph is running, the current node is the same as the from node, and the target node is in the list of allowed exit states from the current node.
+State changes happen when a timeout elapses or upon request. Call `ECSPanseStateMachine.change_state` to trigger a transition.
 
 ```elixir
-  EcspanseStateMachine.submit_node_transition_request(graph_entity_id, :turn_start, :decision_phase)
+  EcspanseStateMachine.change_state(entity_id, :red, :flashing_red)
 ```
 
-In this example, :turn_start is the from node name and :decision_phase is the target node name.
+Here were changing state from :red to :flashing_red.
 
 <!-- MDOC !-->
 
 ### Stopping a graph
 
-The graph will automatically stop when it reaches a node without allowed exit node names.
+The graph will automatically stop when it reaches a state without allowed exit node names.
 
 You can stop a graph from running anytime by submitting a stop graph request.
 
 ```elixir
-  EcspanseStateMachine.submit_stop_graph_request(graph_entity_id)
+  EcspanseStateMachine.stop(entity_id)
 ```
 
 The graph will be stopped and if the timeout timer of current node will be stopped (provided it has one).
 
-#### graph stop events
-
-You can listen for graph stopped events.
-
-```elixir
-defmodule OnGraphStopped do
-  use Ecspanse.System,
-    event_subscriptions: [EcspanseStateMachine.Events.GraphStopped]
-
-  def run(
-        %EcspanseStateMachine.Events.GraphStopped{
-          entity_id: entity_id,
-          name: name,
-          metadata: metadata
-        },
-        _frame
-      ) do
-    IO.inspect(
-      "Graph #{entity_id}, #{name} stopped, metadata: #{inspect(metadata)}"
-    )
-  end
-end
-```
-
-### Despawning a graph
-
-The systems api has a function to despawn a graph and it's nodes.
-
-```elixir
-    EcspanseStateMachine.despawn_graph(graph_entity_id)
-```
-
 ## Generate a Mermaid State Diagram
 
-After you have spawned a graph, you can get a [Mermaid.js](https://mermaid.js.org/) state diagram for it.
+ECSpanseStateMachine can generate a [Mermaid.js](https://mermaid.js.org/) state diagram for your graph.
 
 ```elixir
-  EcspanseStateMachine.as_mermaid_diagram(graph_entity_id)
+  EcspanseStateMachine.as_mermaid_diagram(entity_id)
 ```
 
 Here's an example output.
 
 ```
----
-title: battle_babae8bc-f0bc-4451-a568-da123ee2caa7
----
 stateDiagram-v2
-  [*] --> turn_start
-  turn_start --> grenades_explode: ⏲️
-  grenades_explode --> combatants_attack: ⏲️
-  combatants_attack --> turn_end: ⏲️
-  turn_end --> turn_start
-  turn_end --> battle_end
-  battle_end --> [*]
+  [*] --> red
+  flashing_red --> red
+  green --> yellow: ⏲️
+  red --> flashing_red
+  red --> green: ⏲️
+  yellow --> red: ⏲️
 ```
 
 Which produces the following state diagram when rendered
 
-[![](https://mermaid.ink/img/pako:eNp1kEFuwjAQRa9izbLCUkmhRV6w4gYs6yqa2AONiB3kTKpWiDNwF1acpxfoFTqOioJadWN7_vsjff8DuNYTGNBa28g1N2RUhSx3WWGFtKic3tzLMZvNpxrnjwvtcVo8EBUO8cnGYbFjZFrVuE0Y9Ftho1LPdy9K66XiPsVSeOKsjtMAt4kieupKet83EsSoz9P563LK1t9sWHBtkHQYuSslJLrd7cYfOAag6G-dV-2_hFf004SMGY3TAOWHWYUJBEoBay81HrJigV8pkAUjT49pZ8HGo_iw53b9ER0YTj1NoN_7sTcwG2w6On4DXdGPHQ?type=png)](https://mermaid.live/edit#pako:eNp1kEFuwjAQRa9izbLCUkmhRV6w4gYs6yqa2AONiB3kTKpWiDNwF1acpxfoFTqOioJadWN7_vsjff8DuNYTGNBa28g1N2RUhSx3WWGFtKic3tzLMZvNpxrnjwvtcVo8EBUO8cnGYbFjZFrVuE0Y9Ftho1LPdy9K66XiPsVSeOKsjtMAt4kieupKet83EsSoz9P563LK1t9sWHBtkHQYuSslJLrd7cYfOAag6G-dV-2_hFf004SMGY3TAOWHWYUJBEoBay81HrJigV8pkAUjT49pZ8HGo_iw53b9ER0YTj1NoN_7sTcwG2w6On4DXdGPHQ)
+[![](https://mermaid.ink/img/pako:eNpNkD0OwjAMha8SeUTtwpiBiZWJkSBkNW4bkR-UpqCq6hl6FybOwwW4Ammrqtn8vvcs-bmHwkkCDk3AQEeFlUeTP_fCMnbZXVmeH5gnOclSY1MrW92iTvkqU3_iHWntXmuSs-_4_n3GdKPyRDY1ZjBby_LmQQaGvEEl4639lBUQajIkgMdRor8LEHaIOWyDO3e2AB58Sxm0D7lVA16ibiIlqYLzp6X8_IPhD-E_XkE?type=png)](https://mermaid.live/edit#pako:eNpNkD0OwjAMha8SeUTtwpiBiZWJkSBkNW4bkR-UpqCq6hl6FybOwwW4Ammrqtn8vvcs-bmHwkkCDk3AQEeFlUeTP_fCMnbZXVmeH5gnOclSY1MrW92iTvkqU3_iHWntXmuSs-_4_n3GdKPyRDY1ZjBby_LmQQaGvEEl4639lBUQajIkgMdRor8LEHaIOWyDO3e2AB58Sxm0D7lVA16ibiIlqYLzp6X8_IPhD-E_XkE)
