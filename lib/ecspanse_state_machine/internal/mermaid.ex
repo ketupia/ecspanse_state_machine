@@ -21,7 +21,7 @@ defmodule EcspanseStateMachine.Internal.Mermaid do
           transitions_block(entity, state_machine)
         ]
         |> Enum.reject(&(String.trim(&1) == ""))
-        |> Enum.join("\n")
+        |> Enum.join("\n\n")
 
       {:ok, diagram}
     end
@@ -109,7 +109,7 @@ title: #{title}
   end
 
   defp map_transition(transition) do
-    "  #{generate_id(transition[:from])} --> #{generate_id(transition[:to])}" <>
+    "#{generate_id(transition[:from])} --> #{generate_id(transition[:to])}" <>
       if transition[:timeout] do
         ": ⏲️"
       else
