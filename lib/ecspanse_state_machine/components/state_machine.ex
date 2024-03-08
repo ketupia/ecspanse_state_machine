@@ -24,7 +24,7 @@ defmodule EcspanseStateMachine.Components.StateMachine do
     end
   end
 
-  # @spec flatten(StateMachine.t()) :: list(atom())
+  # @spec flatten(StateMachine.t()) :: list(atom()| String.t())
   @doc """
   Produces a list of states visited via depth first
   """

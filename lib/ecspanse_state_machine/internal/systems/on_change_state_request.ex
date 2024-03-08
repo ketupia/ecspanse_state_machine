@@ -59,7 +59,8 @@ defmodule EcspanseStateMachine.Internal.Systems.OnChangeStateRequest do
     end
   end
 
-  @spec ensure_is_allowed_exit(Components.StateMachine.t(), atom()) :: :ok | {:error, String.t()}
+  @spec ensure_is_allowed_exit(Components.StateMachine.t(), atom() | String.t()) ::
+          :ok | {:error, String.t()}
   defp ensure_is_allowed_exit(state_machine, to) do
     state = Components.StateMachine.get_state(state_machine, state_machine.current_state)
 
@@ -71,7 +72,7 @@ defmodule EcspanseStateMachine.Internal.Systems.OnChangeStateRequest do
     end
   end
 
-  @spec ensure_from_matches_current_state(Components.StateMachine.t(), atom()) ::
+  @spec ensure_from_matches_current_state(Components.StateMachine.t(), atom() | String.t()) ::
           :ok | {:error, String.t()}
   defp ensure_from_matches_current_state(state_machine, from) do
     if state_machine.current_state == from do

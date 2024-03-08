@@ -15,7 +15,12 @@ defmodule EcspanseStateMachine do
     Internal.Mermaid.as_state_diagram(entity_id, title)
   end
 
-  @spec change_state(Ecspanse.Entity.id(), atom(), atom(), atom()) ::
+  @spec change_state(
+          Ecspanse.Entity.id(),
+          atom() | String.t(),
+          atom() | String.t(),
+          atom() | String.t()
+        ) ::
           :ok | {:error, :not_found}
   @doc """
   Submits a request to change state
@@ -47,7 +52,8 @@ defmodule EcspanseStateMachine do
     end
   end
 
-  @spec fetch_state_exits_to(Ecspanse.Entity.id(), atom()) :: {:ok, list()} | {:error, :not_found}
+  @spec fetch_state_exits_to(Ecspanse.Entity.id(), atom() | String.t()) ::
+          {:ok, list()} | {:error, :not_found}
   @doc """
   Returns the exits_to states for the named state
   """
@@ -88,7 +94,7 @@ defmodule EcspanseStateMachine do
     end
   end
 
-  @spec state_machine(atom(), list(Keyword.t()), boolean()) ::
+  @spec state_machine(atom() | String.t(), list(Keyword.t()), boolean()) ::
           Ecspanse.Component.component_spec()
   @doc """
   Creates and returns a component_spec for a State Machine
