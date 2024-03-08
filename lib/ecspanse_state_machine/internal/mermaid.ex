@@ -13,10 +13,16 @@ defmodule EcspanseStateMachine.Internal.Mermaid do
   def as_state_diagram(entity_id, title) do
     with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
          {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
-      diagram = "stateDiagram-v2
-#{title_block(title)}
-#{id_block(state_machine)}
-#{transitions_block(entity, state_machine)}"
+      diagram =
+        [
+          "stateDiagram-v2",
+          title_block(title),
+          id_block(state_machine),
+          transitions_block(entity, state_machine)
+        ]
+        |> Enum.reject(&(String.trim(&1) == ""))
+        |> Enum.join("\n")
+
       {:ok, diagram}
     end
   end
@@ -33,8 +39,6 @@ defmodule EcspanseStateMachine.Internal.Mermaid do
 
   defp generate_id(name) when is_binary(name),
     do: String.replace(name, " ", "_")
-
-  defp generate_id(name) when is_atom(name), do: inspect(name)
 
   defp generate_id(name), do: name
 

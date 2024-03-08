@@ -37,12 +37,12 @@ defmodule MermaidTest do
     test "has transitions" do
       entity = Examples.traffic_light()
       {:ok, mermaid} = EcspanseStateMachine.as_mermaid_diagram(entity.id)
-      assert mermaid =~ "[*] --> :red"
-      assert mermaid =~ ":green --> :yellow"
-      assert mermaid =~ ":yellow --> :red"
-      assert mermaid =~ ":red --> :green"
-      assert mermaid =~ ":red --> :flashing_red"
-      assert mermaid =~ ":flashing_red --> :red"
+      assert mermaid =~ "[*] --> red"
+      assert mermaid =~ "green --> yellow"
+      assert mermaid =~ "yellow --> red"
+      assert mermaid =~ "red --> green"
+      assert mermaid =~ "red --> flashing_red"
+      assert mermaid =~ "flashing_red --> red"
       Ecspanse.Command.despawn_entity!(entity)
     end
   end
@@ -51,9 +51,9 @@ defmodule MermaidTest do
     test "has timeout indicators" do
       entity = Examples.traffic_light_with_timer()
       {:ok, mermaid} = EcspanseStateMachine.as_mermaid_diagram(entity.id)
-      assert mermaid =~ ":green --> :yellow: ⏲️"
-      assert mermaid =~ ":yellow --> :red: ⏲️"
-      assert mermaid =~ ":red --> :green: ⏲️"
+      assert mermaid =~ "green --> yellow: ⏲️"
+      assert mermaid =~ "yellow --> red: ⏲️"
+      assert mermaid =~ "red --> green: ⏲️"
       Ecspanse.Command.despawn_entity!(entity)
     end
   end
@@ -73,7 +73,7 @@ defmodule MermaidTest do
       {:ok, mermaid} = EcspanseStateMachine.as_mermaid_diagram(entity.id)
       assert mermaid =~ "turn_starts --> player_1"
       assert mermaid =~ "player_1 --> player_2"
-      assert mermaid =~ "player_2 --> :player3"
+      assert mermaid =~ "player_2 --> player3"
       Ecspanse.Command.despawn_entity!(entity)
     end
   end
