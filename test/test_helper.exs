@@ -33,4 +33,19 @@ defmodule Examples do
       ]
     })
   end
+
+  def game_turn_loop() do
+    Ecspanse.Command.spawn_entity!({
+      Ecspanse.Entity,
+      components: [
+        EcspanseStateMachine.state_machine("turn starts", [
+          [name: "turn starts", exits_to: ["player 1"]],
+          [name: "player 1", exits_to: ["player 2"]],
+          [name: "player 2", exits_to: [:player3]],
+          [name: :player3, exits_to: [:turn_end]],
+          [name: :turn_end, exits_to: ["turn starts"]]
+        ])
+      ]
+    })
+  end
 end

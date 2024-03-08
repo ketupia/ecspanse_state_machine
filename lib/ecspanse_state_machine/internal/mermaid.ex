@@ -5,17 +5,41 @@ defmodule EcspanseStateMachine.Internal.Mermaid do
   alias EcspanseStateMachine.Components
   require Logger
 
-  @spec as_state_diagram(Ecspanse.Entity.id(), String.t()) :: String.t() | {:error, :not_found}
-  def as_state_diagram(entity_id, title \\ nil) do
-    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id) do
-      "stateDiagram-v2
+  @spec as_state_diagram(Ecspanse.Entity.id(), String.t()) ::
+          {:error, :not_found} | {:ok, String.t()}
+  @doc """
+  Returns the source for a sequence diagram of the state machine
+  """
+  def as_state_diagram(entity_id, title) do
+    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
+         {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
+      diagram = "stateDiagram-v2
 #{title_block(title)}
-#{transitions_block(entity)}"
+#{id_block(state_machine)}
+#{transitions_block(entity, state_machine)}"
+      {:ok, diagram}
     end
   end
 
+  defp id_block(state_machine) do
+    state_machine.states
+    |> Enum.map(& &1[:name])
+    |> Enum.filter(&needs_id/1)
+    |> Enum.map_join("\n", &"#{generate_id(&1)}: #{&1}")
+  end
+
+  defp needs_id(name) when is_binary(name), do: String.contains?(name, " ")
+  defp needs_id(_name), do: false
+
+  defp generate_id(name) when is_binary(name),
+    do: String.replace(name, " ", "_")
+
+  defp generate_id(name) when is_atom(name), do: inspect(name)
+
+  defp generate_id(name), do: name
+
   defp title_block(title) do
-    if title == nil do
+    if String.trim(title) == "" do
       ""
     else
       "---
@@ -24,24 +48,22 @@ title: #{title}
     end
   end
 
-  defp transitions_block(entity) do
-    with {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
-      transitions = state_machine_transitions(state_machine)
+  defp transitions_block(entity, state_machine) do
+    transitions = state_machine_transitions(state_machine)
 
-      transitions =
-        if Ecspanse.Query.has_component?(entity, Components.StateTimer) do
-          {:ok, timer} =
-            Ecspanse.Query.fetch_component(entity, Components.StateTimer)
+    transitions =
+      if Ecspanse.Query.has_component?(entity, Components.StateTimer) do
+        {:ok, timer} =
+          Ecspanse.Query.fetch_component(entity, Components.StateTimer)
 
-          add_timeout_transitions(timer.timeouts, transitions)
-        else
-          transitions
-        end
+        add_timeout_transitions(timer.timeouts, transitions)
+      else
+        transitions
+      end
 
-      transitions
-      |> Enum.sort(&transition_sort_fn/2)
-      |> Enum.map_join("\n", &format_transition/1)
-    end
+    transitions
+    |> Enum.sort(&transition_sort_fn/2)
+    |> Enum.map_join("\n", &map_transition/1)
   end
 
   defp transition_sort_fn(a, b) do
@@ -59,9 +81,9 @@ title: #{title}
         true
 
       {a_from, a_to, b_from, b_to} ->
-        case Atom.to_string(a_from) == Atom.to_string(b_from) do
-          true -> Atom.to_string(a_to) < Atom.to_string(b_to)
-          false -> Atom.to_string(a_from) < Atom.to_string(b_from)
+        case a_from == b_from do
+          true -> a_to < b_to
+          false -> a_from < b_from
         end
     end
   end
@@ -82,8 +104,8 @@ title: #{title}
     end)
   end
 
-  defp format_transition(transition) do
-    "  #{transition[:from]} --> #{transition[:to]}" <>
+  defp map_transition(transition) do
+    "  #{generate_id(transition[:from])} --> #{generate_id(transition[:to])}" <>
       if transition[:timeout] do
         ": ⏲️"
       else

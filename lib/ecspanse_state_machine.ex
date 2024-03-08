@@ -11,7 +11,7 @@ defmodule EcspanseStateMachine do
   @doc """
   Generates the source for a Mermaid State Diagram
   """
-  def as_mermaid_diagram(entity_id, title \\ nil) do
+  def as_mermaid_diagram(entity_id, title \\ "") do
     Internal.Mermaid.as_state_diagram(entity_id, title)
   end
 
@@ -32,6 +32,32 @@ defmodule EcspanseStateMachine do
            trigger: trigger
          ]}
       )
+    end
+  end
+
+  @spec fetch_states(Ecspanse.Entity.id()) :: {:ok, list()} | {:error, :not_found}
+  @doc """
+  Returns a list of state names
+  """
+  def fetch_states(entity_id) do
+    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
+         {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
+      states = state_machine.states |> Enum.map(& &1[:name])
+      {:ok, states}
+    end
+  end
+
+  @spec fetch_state_exits_to(Ecspanse.Entity.id(), atom()) :: {:ok, list()} | {:error, :not_found}
+  @doc """
+  Returns the exits_to states for the named state
+  """
+  def fetch_state_exits_to(entity_id, name) do
+    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
+         {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
+      case Components.StateMachine.get_exits_to(state_machine, name) do
+        nil -> {:error, :not_found}
+        exits_to -> {:ok, exits_to}
+      end
     end
   end
 

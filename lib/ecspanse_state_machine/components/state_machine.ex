@@ -17,21 +17,6 @@ defmodule EcspanseStateMachine.Components.StateMachine do
     ],
     tags: [:ecspanse_state_machine]
 
-  def has_exit_to?(state_machine, name, exit_to) do
-    Enum.member?(get_exits_to(state_machine, name), exit_to)
-  end
-
-  def get_exits_to(state_machine, name) do
-    state = Enum.find(state_machine.states, &(&1[:name] == name))
-    state[:exits_to]
-  end
-
-  def has_state?(state_machine, name), do: get_state(state_machine, name) != nil
-
-  def get_state(state_machine, name) do
-    Enum.find(state_machine.states, &(&1[:name] == name))
-  end
-
   def fetch_state(state_machine, name) do
     case get_state(state_machine, name) do
       nil -> {:error, :not_found}
@@ -73,6 +58,21 @@ defmodule EcspanseStateMachine.Components.StateMachine do
       end)
     end
   end
+
+  def get_exits_to(state_machine, name) do
+    state = Enum.find(state_machine.states, &(&1[:name] == name))
+    state[:exits_to]
+  end
+
+  def get_state(state_machine, name) do
+    Enum.find(state_machine.states, &(&1[:name] == name))
+  end
+
+  def has_exit_to?(state_machine, name, exit_to) do
+    Enum.member?(get_exits_to(state_machine, name), exit_to)
+  end
+
+  def has_state?(state_machine, name), do: get_state(state_machine, name) != nil
 
   def validate(component) do
     state_names = Enum.map(component.states, & &1[:name])
