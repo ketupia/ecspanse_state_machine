@@ -82,9 +82,9 @@ The state machine is an ECSpanse component. You add it to your entity's spec in 
 
 ### Starting your state machine
 
-The default behavior is to automatically start a state machine. If you don't want that behavior, then you can 'set auto_start to false' and call `EcspanseStateMachine.start` when you're ready.
+The default behavior is to automatically start a state machine. If you don't want that behavior, then you can 'set auto_start to false' and call `EcspanseStateMachine.request_start` when you're ready.
 
-Auto start is the third parameter to EcspanseStateMachine.state_machine().
+Auto start is an option, the third parameter to EcspanseStateMachine.state_machine().
 
 ```elixir
     traffic_light =
@@ -101,7 +101,7 @@ Auto start is the third parameter to EcspanseStateMachine.state_machine().
       })
 
   # some time later
-  EcspanseStateMachine.start(traffic_light.id)
+  EcspanseStateMachine.request_start(traffic_light.id)
 ```
 
 ### Adding timeouts
@@ -157,10 +157,10 @@ end
 
 ### Request a state change
 
-State changes happen when a timeout elapses or upon request. Call `ECSPanseStateMachine.change_state` to trigger a transition.
+State changes happen when a timeout elapses or upon request. Call `ECSPanseStateMachine.request_transition` to trigger a transition.
 
 ```elixir
-  EcspanseStateMachine.change_state(entity_id, :red, :flashing_red)
+  EcspanseStateMachine.request_transition(entity_id, :red, :flashing_red)
 ```
 
 Here were changing state from :red to :flashing_red.
@@ -171,10 +171,10 @@ Here were changing state from :red to :flashing_red.
 
 The state machine will automatically stop when it reaches a state no exits.
 
-You can stop a state machine anytime by calling `ECSpanseStateMachine.stop`.
+You can stop a state machine anytime by calling `ECSpanseStateMachine.request_stop`.
 
 ```elixir
-  EcspanseStateMachine.stop(entity_id)
+  EcspanseStateMachine.request_stop(entity_id)
 ```
 
 ## Generate a Mermaid State Diagram

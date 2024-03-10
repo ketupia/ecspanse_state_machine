@@ -16,7 +16,7 @@ defmodule EcspanseStateMachine.Internal.Systems.OnStateTimeout do
          {:ok, timer} <- Components.StateTimer.fetch(entity) do
       timeout = Components.StateTimer.get_timeout(timer, timer.timing_state)
 
-      EcspanseStateMachine.change_state(
+      EcspanseStateMachine.request_transition(
         entity_id,
         timer.timing_state,
         timeout[:exits_to],

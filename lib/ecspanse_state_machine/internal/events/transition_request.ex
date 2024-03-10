@@ -1,4 +1,4 @@
-defmodule EcspanseStateMachine.Internal.Events.ChangeStateRequest do
+defmodule EcspanseStateMachine.Internal.Events.TransitionRequest do
   @moduledoc """
   Requests a change of states
 

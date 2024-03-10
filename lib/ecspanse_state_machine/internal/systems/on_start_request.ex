@@ -27,10 +27,6 @@ defmodule EcspanseStateMachine.Internal.Systems.OnStartRequest do
         is_running: true
       )
 
-      # Logger.info(
-      #   "State Machine for #{Ecspanse.Query.get_component_entity(state_machine).id} in now running with state: #{inspect(state_machine.initial_state)}"
-      # )
-
       entity = Ecspanse.Query.get_component_entity(state_machine)
       Ecspanse.event({EcspanseStateMachine.Events.Started, [entity_id: entity.id]})
 

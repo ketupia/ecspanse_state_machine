@@ -1,4 +1,4 @@
-defmodule EcspanseStateMachine.Internal.Systems.OnChangeStateRequest do
+defmodule EcspanseStateMachine.Internal.Systems.OnTransitionRequest do
   @moduledoc """
     transitions from the current state to the exit state
   """
@@ -7,10 +7,10 @@ defmodule EcspanseStateMachine.Internal.Systems.OnChangeStateRequest do
   require Logger
 
   use Ecspanse.System,
-    event_subscriptions: [Events.ChangeStateRequest]
+    event_subscriptions: [Events.TransitionRequest]
 
   def run(
-        %Events.ChangeStateRequest{
+        %Events.TransitionRequest{
           entity_id: entity_id,
           from: from,
           to: to,
@@ -20,14 +20,14 @@ defmodule EcspanseStateMachine.Internal.Systems.OnChangeStateRequest do
       ) do
     with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
          {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
-      change_state(state_machine, from, to, trigger)
+      transition(state_machine, from, to, trigger)
     else
       {:error, :not_found} ->
-        Logger.warning("ChangeStateRequest: State Machine not found on entity #{entity_id}")
+        Logger.warning("TransitionRequest: State Machine not found on entity #{entity_id}")
     end
   end
 
-  defp change_state(state_machine, from, to, trigger) do
+  defp transition(state_machine, from, to, trigger) do
     with :ok <- ensure_is_running(state_machine),
          :ok <- ensure_from_matches_current_state(state_machine, from),
          :ok <- ensure_is_allowed_exit(state_machine, to) do
@@ -47,12 +47,12 @@ defmodule EcspanseStateMachine.Internal.Systems.OnChangeStateRequest do
       state = Components.StateMachine.get_state(state_machine, to)
 
       if Enum.empty?(state[:exits_to]) do
-        EcspanseStateMachine.stop(entity.id)
+        EcspanseStateMachine.request_stop(entity.id)
       end
     else
       error = {:error, reason} ->
         Logger.warning(
-          "Could not change states from #{inspect(from)} to #{inspect(to)} trigger #{inspect(trigger)} for #{Ecspanse.Query.get_component_entity(state_machine).id}: #{reason}"
+          "Could not transition from #{inspect(from)} to #{inspect(to)} trigger #{inspect(trigger)} for #{Ecspanse.Query.get_component_entity(state_machine).id}: #{reason}"
         )
 
         error

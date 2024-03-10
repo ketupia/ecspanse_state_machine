@@ -12,7 +12,7 @@ defmodule EcspanseStateMachine.Internal.Systems.AutoStarter do
     |> Enum.filter(& &1.auto_start)
     |> Enum.each(fn sm ->
       Ecspanse.Command.update_component!(sm, auto_start: false)
-      EcspanseStateMachine.start(Ecspanse.Query.get_component_entity(sm).id)
+      EcspanseStateMachine.request_start(Ecspanse.Query.get_component_entity(sm).id)
     end)
   end
 end
