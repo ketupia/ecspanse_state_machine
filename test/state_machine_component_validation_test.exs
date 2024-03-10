@@ -57,7 +57,7 @@ defmodule StateMachineComponentValidationTest do
     end
 
     test "sets auto_start to provided value" do
-      result = EcspanseStateMachine.state_machine(:initial, [], false)
+      result = EcspanseStateMachine.state_machine(:initial, [], auto_start: false)
 
       assert Keyword.get(elem(result, 1), :auto_start) == false
     end
