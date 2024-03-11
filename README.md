@@ -14,6 +14,7 @@
 - Validation - all states must be defined and reachable
 - State changes on request or timeout
 - Register for State Change events
+- Telemetry
 - Mermaid state diagram generation
 
 <!-- MDOC !-->
@@ -176,6 +177,17 @@ You can stop a state machine anytime by calling `ECSpanseStateMachine.request_st
 ```elixir
   EcspanseStateMachine.request_stop(entity_id)
 ```
+
+## Telemetry
+
+ECSpanse State Machine implements telemetry for the following events.
+
+| event name                         | measurement | metadata             | description                     |
+| ---------------------------------- | ----------- | -------------------- | ------------------------------- |
+| ecspanse_state_machine.start       | system_time | state_machine        | Executed on state machine start |
+| ecspanse_state_machine_stop        | duration    | state_machine        | Executed on state machine stop  |
+| ecspanse_state_machine.state.start | system_time | state_machine, state | Executed on entering a state    |
+| ecspanse_state_machine.state.stop  | duration    | state_machine, state | Executed on exiting a state     |
 
 ## Generate a Mermaid State Diagram
 

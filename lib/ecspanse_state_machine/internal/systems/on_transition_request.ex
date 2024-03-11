@@ -2,6 +2,7 @@ defmodule EcspanseStateMachine.Internal.Systems.OnTransitionRequest do
   @moduledoc """
     transitions from the current state to the exit state
   """
+  alias EcspanseStateMachine.Internal.Telemetry
   alias EcspanseStateMachine.Internal.Events
   alias EcspanseStateMachine.Components
   require Logger
@@ -31,11 +32,17 @@ defmodule EcspanseStateMachine.Internal.Systems.OnTransitionRequest do
     with :ok <- ensure_is_running(state_machine),
          :ok <- ensure_from_matches_current_state(state_machine, from),
          :ok <- ensure_is_allowed_exit(state_machine, to) do
-      Ecspanse.Command.update_component!(state_machine, current_state: to)
+      telemetry_entered_from_time = state_machine.telemetry_state_start_time
+      telemetry_entered_to_time = Telemetry.time()
 
-      # Logger.info(
-      #   "State for #{Ecspanse.Query.get_component_entity(state_machine).id} in now: #{inspect(to)}"
-      # )
+      Telemetry.stop(state_machine, from, telemetry_entered_from_time)
+
+      Ecspanse.Command.update_component!(state_machine,
+        current_state: to,
+        telemetry_state_start_time: telemetry_entered_to_time
+      )
+
+      Telemetry.start(state_machine, to, telemetry_entered_to_time)
 
       entity = Ecspanse.Query.get_component_entity(state_machine)
 

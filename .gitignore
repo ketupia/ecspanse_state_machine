@@ -28,3 +28,4 @@ ecspanse_state_machine-*.tar
 
 .credo.exs
 .vscode/settings.json
+mix.lock

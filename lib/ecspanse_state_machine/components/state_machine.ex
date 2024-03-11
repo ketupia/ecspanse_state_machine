@@ -6,6 +6,9 @@ defmodule EcspanseStateMachine.Components.StateMachine do
   * initial_state: the state the machine should be in at start
   * current_state: the state the machine is in now
   * states: keyword lists of states [:name, exits_to[:exit_state1, :exit_state2...]]
+  * auto_start: if true, the machine will be automatically started
+  * start_time: the time the machine was started
+
   """
   use Ecspanse.Component,
     state: [
@@ -13,7 +16,9 @@ defmodule EcspanseStateMachine.Components.StateMachine do
       :auto_start,
       :is_running,
       :current_state,
-      :states
+      :states,
+      :telemetry_start_time,
+      :telemetry_state_start_time
     ],
     tags: [:ecspanse_state_machine]
 
