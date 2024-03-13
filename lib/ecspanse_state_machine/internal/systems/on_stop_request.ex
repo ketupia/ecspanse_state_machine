@@ -1,7 +1,7 @@
 defmodule EcspanseStateMachine.Internal.Systems.OnStopRequest do
-  @moduledoc """
-  Stops the  machine if it's running
-  """
+  @moduledoc false
+  # Stops the  machine if it's running
+
   alias EcspanseStateMachine.Components
   alias EcspanseStateMachine.Internal.Events
   alias EcspanseStateMachine.Internal.Telemetry
@@ -36,8 +36,8 @@ defmodule EcspanseStateMachine.Internal.Systems.OnStopRequest do
 
       Ecspanse.event({EcspanseStateMachine.Events.Stopped, [entity_id: entity.id]})
 
-      Telemetry.stop(state_machine, telemetry_start_time)
       Telemetry.stop(state_machine, state, telemetry_state_start_time)
+      Telemetry.stop(state_machine, telemetry_start_time)
     else
       :ok
     end

@@ -1,9 +1,8 @@
 defmodule EcspanseStateMachine.Internal.Systems.AutoStarter do
-  @moduledoc """
-  Starts the machine unless it is already running
-  """
+  @moduledoc false
+  # Starts the machine unless it is already running
+
   alias EcspanseStateMachine.Components
-  require Logger
 
   use Ecspanse.System
 

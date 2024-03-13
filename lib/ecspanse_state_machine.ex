@@ -10,6 +10,9 @@ defmodule EcspanseStateMachine do
           {:ok, String.t()} | {:error, :not_found}
   @doc """
   Generates the source for a Mermaid State Diagram
+
+  ## Parameters
+    - title: The diagram will have this title (optional)
   """
   def as_mermaid_diagram(entity_id, title \\ "") do
     Internal.Mermaid.as_state_diagram(entity_id, title)
@@ -24,6 +27,16 @@ defmodule EcspanseStateMachine do
           :ok | {:error, :not_found}
   @doc """
   Submits a request to transition from one state to another.
+
+  This will trigger a state change so long as
+  * the state machine is running
+  * the from state is the machines's current state
+  * the to state is valid from the current state
+
+  ## Parameters
+    - from: the state to transition from
+    - to: the state to transition to
+    - trigger: the reason for the transition
   """
   def request_transition(entity_id, from, to, trigger \\ :request) do
     with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
@@ -37,6 +50,22 @@ defmodule EcspanseStateMachine do
            trigger: trigger
          ]}
       )
+    end
+  end
+
+  @spec fetch_current(Ecspanse.Entity.id()) ::
+          {:ok, atom() | String.t()} | {:error, :not_found} | {:error, :not_running}
+  @doc """
+  Returns the current state of the state machine
+  """
+  def fetch_current(entity_id) do
+    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
+         {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
+      if state_machine.is_running do
+        {:ok, state_machine.current_state}
+      else
+        {:error, :not_running}
+      end
     end
   end
 
@@ -68,7 +97,18 @@ defmodule EcspanseStateMachine do
   end
 
   @doc """
-  setup is to be called when registering ECSpanse systems in your manager
+  setup is to be called when registering ECSpanse systems in your manager.
+
+  ## Examples
+      def setup(data) do
+        data
+        |> EcspanseStateMachine.setup()
+        #
+        # Your registrations here
+        #
+        # Be sure to setup the Ecspanse.System.Timer if you have any timeouts
+        |> Ecspanse.add_frame_end_system(Ecspanse.System.Timer)
+      end
   """
   @spec setup(Ecspanse.Data.t()) :: Ecspanse.Data.t()
   def setup(data) do
@@ -85,7 +125,7 @@ defmodule EcspanseStateMachine do
   @spec request_start(Ecspanse.Entity.id()) ::
           :ok | {:error, :not_found}
   @doc """
-  Starts a state machine
+  Submits a request to start a state machine
   """
   def request_start(entity_id) do
     with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
@@ -97,10 +137,19 @@ defmodule EcspanseStateMachine do
   @spec state_machine(atom() | String.t(), list(Keyword.t()), Keyword.t()) ::
           Ecspanse.Component.component_spec()
   @doc """
-  Creates and returns a component_spec for a State Machine
+  Creates a component_spec for a State Machine
 
-  ## opts
+  ## Options
     auto_start: boolean - if true, the state machine will start automatically
+
+  ## Examples
+      traffic_light_component_spec =
+        EcspanseStateMachine.state_machine(:red, [
+          [name: :red, exits_to: [:green, :flashing_red]],
+          [name: :flashing_red, exits_to: [:red]],
+         [name: :green, exits_to: [:yellow]],
+         [name: :yellow, exits_to: [:red]]
+        ])
   """
   def state_machine(initial_state, states, opts \\ [auto_start: true]) do
     {Components.StateMachine,
@@ -114,7 +163,7 @@ defmodule EcspanseStateMachine do
   @spec state_timer(list(Keyword.t())) ::
           Ecspanse.Component.component_spec()
   @doc """
-  Creates and returns a component_spec for a State Timer
+  Creates a component_spec for a State Timer
   """
   def state_timer(timeouts) do
     {Components.StateTimer, [timeouts: timeouts]}
@@ -123,7 +172,7 @@ defmodule EcspanseStateMachine do
   @spec request_stop(Ecspanse.Entity.id()) ::
           :ok | {:error, :not_found}
   @doc """
-  Stops a state machine
+  Submits a request to stop a state machine
   """
   def request_stop(entity_id) do
     with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),

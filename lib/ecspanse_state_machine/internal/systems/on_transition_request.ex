@@ -1,7 +1,7 @@
 defmodule EcspanseStateMachine.Internal.Systems.OnTransitionRequest do
-  @moduledoc """
-    transitions from the current state to the exit state
-  """
+  @moduledoc false
+  # transitions from the current (from) state to the exit (to) state
+
   alias EcspanseStateMachine.Internal.Telemetry
   alias EcspanseStateMachine.Internal.Events
   alias EcspanseStateMachine.Components

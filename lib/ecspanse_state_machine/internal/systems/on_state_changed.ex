@@ -1,10 +1,9 @@
 defmodule EcspanseStateMachine.Internal.Systems.OnStateChanged do
-  @moduledoc """
-  Starts/Stops the Timeout Timer on state change
-  """
+  @moduledoc false
+  # Starts/Stops the Timeout Timer on state change
+
   alias EcspanseStateMachine.Components
   alias EcspanseStateMachine.Events
-  require Logger
 
   use Ecspanse.System, event_subscriptions: [Events.StateChanged]
 
@@ -40,9 +39,5 @@ defmodule EcspanseStateMachine.Internal.Systems.OnStateChanged do
       end
 
     Ecspanse.Command.update_component!(timer, changes)
-
-    # Logger.info(
-    #   "Timer changes for #{Ecspanse.Query.get_component_entity(timer).id}: #{inspect(changes)}"
-    # )
   end
 end

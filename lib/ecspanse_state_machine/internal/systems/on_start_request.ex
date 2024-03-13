@@ -1,7 +1,7 @@
 defmodule EcspanseStateMachine.Internal.Systems.OnStartRequest do
-  @moduledoc """
-  Starts the machine unless it is already running
-  """
+  @moduledoc false
+  # Starts the machine unless it is already running
+
   alias EcspanseStateMachine.Components
   alias EcspanseStateMachine.Internal.Events
   alias EcspanseStateMachine.Internal.Telemetry

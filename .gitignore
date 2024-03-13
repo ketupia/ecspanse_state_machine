@@ -27,5 +27,7 @@ ecspanse_state_machine-*.tar
 
 
 .credo.exs
-.vscode/settings.json
-mix.lock
+.vscode/
+doc/
+.DS_Store
+cspell.json

@@ -1,7 +1,7 @@
 defmodule EcspanseStateMachine.Internal.Mermaid do
-  @moduledoc """
-  Produces the definition of a Mermaid.js state diagram from a state_machine
-  """
+  @moduledoc false
+  # Produces the definition of a Mermaid.js state diagram from a state_machine
+
   alias EcspanseStateMachine.Components
   require Logger
 

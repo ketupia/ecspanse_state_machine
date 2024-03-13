@@ -1,14 +1,12 @@
 defmodule EcspanseStateMachine.Components.StateMachine do
   @moduledoc """
-
+  The state machine component tracks the running status and current state.
 
   ## Fields
   * initial_state: the state the machine should be in at start
   * current_state: the state the machine is in now
   * states: keyword lists of states [:name, exits_to[:exit_state1, :exit_state2...]]
   * auto_start: if true, the machine will be automatically started
-  * start_time: the time the machine was started
-
   """
   use Ecspanse.Component,
     state: [

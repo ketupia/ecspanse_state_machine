@@ -1,7 +1,6 @@
 defmodule EcspanseStateMachine.Internal.Systems.OnStateTimeout do
-  @moduledoc """
-  Triggers a state change from the current state to the timeout exits_to state
-  """
+  @moduledoc false
+  # Triggers a state change from the current state to the timeout exits_to state
 
   alias EcspanseStateMachine.Internal.Events
   alias EcspanseStateMachine.Components

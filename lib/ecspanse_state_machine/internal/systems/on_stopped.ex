@@ -1,7 +1,7 @@
 defmodule EcspanseStateMachine.Internal.Systems.OnStopped do
-  @moduledoc """
-  Stops the Timeout Timer on state machine stop
-  """
+  @moduledoc false
+  # Stops the Timeout Timer on state machine stop
+
   alias EcspanseStateMachine.Components
   alias EcspanseStateMachine.Events
   require Logger

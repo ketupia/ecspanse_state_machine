@@ -1,16 +1,20 @@
 ExUnit.start()
 
 defmodule Examples do
+  @moduledoc false
   def traffic_light() do
+    traffic_light_component_spec =
+      EcspanseStateMachine.state_machine(:red, [
+        [name: :red, exits_to: [:green, :flashing_red]],
+        [name: :flashing_red, exits_to: [:red]],
+        [name: :green, exits_to: [:yellow]],
+        [name: :yellow, exits_to: [:red]]
+      ])
+
     Ecspanse.Command.spawn_entity!({
       Ecspanse.Entity,
       components: [
-        EcspanseStateMachine.state_machine(:red, [
-          [name: :red, exits_to: [:green, :flashing_red]],
-          [name: :flashing_red, exits_to: [:red]],
-          [name: :green, exits_to: [:yellow]],
-          [name: :yellow, exits_to: [:red]]
-        ])
+        traffic_light_component_spec
       ]
     })
   end
