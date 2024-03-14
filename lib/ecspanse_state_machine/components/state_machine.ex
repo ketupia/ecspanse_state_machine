@@ -5,40 +5,43 @@ defmodule EcspanseStateMachine.Components.StateMachine do
   ## Fields
   * initial_state: the state the machine should be in at start
   * current_state: the state the machine is in now
-  * states: keyword lists of states [:name, exits_to[:exit_state1, :exit_state2...]]
+  * states: keyword lists of states [:name, exits[:exit_state1, :exit_state2...], :timeout, :default_exit]
   * auto_start: if true, the machine will be automatically started
   """
-  use Ecspanse.Component,
+  alias EcspanseStateMachine.Internal.StateSpec
+
+  @type state_name() :: atom() | String.t()
+
+  use Ecspanse.Template.Component.Timer,
     state: [
       :initial_state,
       :auto_start,
-      :is_running,
       :current_state,
       :states,
       :telemetry_start_time,
-      :telemetry_state_start_time
+      :telemetry_state_start_time,
+      :timing_state,
+      is_running: false,
+      duration: 5_000,
+      time: 5_000,
+      event: EcspanseStateMachine.Internal.Events.StateTimeout,
+      mode: :once,
+      paused: true
     ],
     tags: [:ecspanse_state_machine]
 
-  def fetch_state(state_machine, name) do
-    case get_state(state_machine, name) do
-      nil -> {:error, :not_found}
-      state -> {:ok, state}
-    end
-  end
-
-  # @spec flatten(StateMachine.t()) :: list(atom()| String.t())
+  @spec flatten(any()) :: list(state_name())
   @doc """
   Produces a list of states visited via depth first
   """
-  def flatten(state_machine) do
+  def flatten(%__MODULE__{} = state_machine) do
     flatten_states(state_machine.states, state_machine.initial_state)
   end
 
   defp flatten_states(states, initial_state) when is_list(states) do
     states_by_name =
       states
-      |> Enum.into(%{}, &{&1[:name], &1})
+      |> Enum.into(%{}, &{StateSpec.name(&1), &1})
 
     data = %{
       visited: [],
@@ -56,36 +59,45 @@ defmodule EcspanseStateMachine.Components.StateMachine do
       data = Map.put(data, :visited, List.insert_at(data.visited, 0, to_state))
       state = Map.get(data.states_by_name, to_state)
 
-      Enum.reduce(state[:exits_to], data, fn exit_state, acc ->
+      Enum.reduce(StateSpec.exits(state), data, fn exit_state, acc ->
         flatten_state(exit_state, acc)
       end)
     end
   end
 
-  def get_exits_to(state_machine, name) do
-    state = Enum.find(state_machine.states, &(&1[:name] == name))
-    state[:exits_to]
+  @spec get_state_spec(any(), state_name()) :: keyword() | {:error, String.t()}
+  @doc """
+  Retrieves the keyword list with the provided name
+  """
+  def get_state_spec(%__MODULE__{} = state_machine, name) do
+    Enum.find(
+      state_machine.states,
+      {:error, "No state named #{inspect(name)} found"},
+      &(StateSpec.name(&1) == name)
+    )
   end
-
-  def get_state(state_machine, name) do
-    Enum.find(state_machine.states, &(&1[:name] == name))
-  end
-
-  def has_exit_to?(state_machine, name, exit_to) do
-    Enum.member?(get_exits_to(state_machine, name), exit_to)
-  end
-
-  def has_state?(state_machine, name), do: get_state(state_machine, name) != nil
 
   def validate(component) do
-    state_names = Enum.map(component.states, & &1[:name])
+    state_names = Enum.map(component.states, &StateSpec.name(&1))
 
-    with :ok <- validate_unique_state_names(state_names),
+    with :ok <- validate_state_specs(component.states),
+         :ok <- validate_unique_state_names(state_names),
          :ok <- validate_initial_state_exists(state_names, component.initial_state),
-         :ok <- validate_exit_states_exist(state_names, component.states),
-         :ok <-
-           validate_all_states_reachable(state_names, component.states, component.initial_state) do
-      :ok
+         :ok <- validate_exit_states_exist(state_names, component.states) do
+      validate_all_states_reachable(state_names, component.states, component.initial_state)
+    end
+  end
+
+  defp validate_state_specs(states) do
+    reasons =
+      states
+      |> Enum.map(&StateSpec.validate/1)
+      |> Enum.filter(&(&1 != :ok))
+      |> Enum.map_join("; ", fn {:error, reason} -> reason end)
+
+    case reasons do
+      "" -> :ok
+      _ -> {:error, reasons}
     end
   end
 
@@ -105,13 +117,14 @@ defmodule EcspanseStateMachine.Components.StateMachine do
     missing_exit_states_map =
       states
       |> Enum.reduce(%{}, fn state, acc ->
-        missing_exit_states = state[:exits_to] |> Enum.reject(&Enum.member?(state_names, &1))
+        missing_exit_states =
+          StateSpec.exits(state) |> Enum.reject(&Enum.member?(state_names, &1))
 
         if Enum.any?(missing_exit_states) do
           Map.put(
             acc,
-            state[:name],
-            "Exit states #{Enum.join(missing_exit_states, ", ")} in state #{state[:name]} are missing."
+            StateSpec.name(state),
+            "Exit states #{Enum.join(missing_exit_states, ", ")} in state #{StateSpec.name(state)} are missing."
           )
         else
           acc

@@ -1,16 +1,15 @@
 # EcspanseStateMachine
 
-`ECSpanse State Machine` is a state machine implementation for [`ECSpanse`](https://hexdocs.pm/ecspanse).
+`ECSpanse State Machine` is a state machine implementation for [`ECSpanse`](https://hexdocs.pm/ecspanse). It is an Ecspanse component you include in your entities.
 
-[![](https://mermaid.ink/img/pako:eNpNkD0OwjAMha8SeUTtwpiBiZWJkSBkNW4bkR-UpqCq6hl6FybOwwW4Ammrqtn8vvcs-bmHwkkCDk3AQEeFlUeTP_fCMnbZXVmeH5gnOclSY1MrW92iTvkqU3_iHWntXmuSs-_4_n3GdKPyRDY1ZjBby_LmQQaGvEEl4639lBUQajIkgMdRor8LEHaIOWyDO3e2AB58Sxm0D7lVA16ibiIlqYLzp6X8_IPhD-E_XkE?type=png)](https://mermaid.live/edit#pako:eNpNkD0OwjAMha8SeUTtwpiBiZWJkSBkNW4bkR-UpqCq6hl6FybOwwW4Ammrqtn8vvcs-bmHwkkCDk3AQEeFlUeTP_fCMnbZXVmeH5gnOclSY1MrW92iTvkqU3_iHWntXmuSs-_4_n3GdKPyRDY1ZjBby_LmQQaGvEEl4639lBUQajIkgMdRor8LEHaIOWyDO3e2AB58Sxm0D7lVA16ibiIlqYLzp6X8_IPhD-E_XkE)
+[![](https://mermaid.ink/img/pako:eNpVkDEOwjAMRa8SeUTNwpgBCYmFgYkRM0SNaSOStEpdJFT1DNyFifNwAa5Amg6UJcp7_pFjD1A2hkCBlBIDW3akxNH61pHY7jFkjaFjzbSzuoray9t6UqfVWUi5EdY4wnCxVc2Zjf3DuTydGXNhwa3m2Dgl3o_n5_XAMPMyujDTq180Nco2fQQK8BS9tiZNMmAQAoFr8oSg0tXoeEXAMKac7rk53kMJimNPBfSt-Y0G6qJdlywZy008zKvJGxq_xZBnJQ?type=png)](https://mermaid.live/edit#pako:eNpVkDEOwjAMRa8SeUTNwpgBCYmFgYkRM0SNaSOStEpdJFT1DNyFifNwAa5Amg6UJcp7_pFjD1A2hkCBlBIDW3akxNH61pHY7jFkjaFjzbSzuoray9t6UqfVWUi5EdY4wnCxVc2Zjf3DuTydGXNhwa3m2Dgl3o_n5_XAMPMyujDTq180Nco2fQQK8BS9tiZNMmAQAoFr8oSg0tXoeEXAMKac7rk53kMJimNPBfSt-Y0G6qJdlywZy008zKvJGxq_xZBnJQ)
 
 ## Features
 
 - Every entity can have a state machine executing simultaneously - create, start, and stop independently
 - Validation - all states must be defined and reachable
-- State changes on request or timeout
-- Register for State Change events
-- Telemetry
+- State changes on command or timeout
+- Observable: Events and Telemetry
 - Mermaid state diagram generation
 
 ## Installation
@@ -21,7 +20,7 @@ by adding `ecspanse_state_machine` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:ecspanse_state_machine, "~> 0.2.0"}
+    {:ecspanse_state_machine, "~> 0.3.0"}
   ]
 end
 ```
@@ -30,11 +29,9 @@ end
 
 1. [Systems Setup](#systems-setup)
 2. [Add a state machine](#add-a-state-machine)
-3. [Starting your state machine](#starting-your-state-machine)
-4. [Adding timeouts](#adding-timeouts)
-5. [Listen for state changes](#listen-for-state-changes)
-6. [Request a state change](#request-a-state-change)
-7. [Stopping a state machine](#stopping-a-state-machine)
+3. [Listen for state changes](#listen-for-state-changes)
+4. [Command a state change](#command-a-state-change)
+5. [Stopping a state machine](#stopping-a-state-machine)
 
 ### Systems Setup
 
@@ -56,18 +53,21 @@ ECSpanseStateMachine will add the systems it needs for you.
 
 ### Add a state machine
 
-The state machine is an ECSpanse component. You add it to your entity's spec in the components list. `EcspanseStateMachine.state_machine` is a convenience API function to create the state machine component.
+The state machine is an ECSpanse component. You add it to your entity's spec in the components list. `EcspanseStateMachine.new` is a convenience API function to create the state machine component.
 
 1. Create a state machine component spec
 
 ```elixir
-    traffic_light_component_spec =
-      EcspanseStateMachine.state_machine(:red, [
-        [name: :red, exits_to: [:green, :flashing_red]],
-        [name: :flashing_red, exits_to: [:red]],
-        [name: :green, exits_to: [:yellow]],
-        [name: :yellow, exits_to: [:red]]
-      ])
+    state_machine =
+      EcspanseStateMachine.new(
+        :idle,
+        [
+          [name: :idle, exits: [:patrol, :fight], timeout: 5_000],
+          [name: :patrol, exits: [:fight, :idle], timeout: 10_000, default_exit: :idle],
+          [name: :fight, exits: [:idle, :die]],
+          [name: :die]
+        ]
+      )
 ```
 
 2. Include the component in your entity
@@ -75,67 +75,70 @@ The state machine is an ECSpanse component. You add it to your entity's spec in 
 ```elixir
     Ecspanse.Command.spawn_entity!({
       Ecspanse.Entity,
-      components: [
-        traffic_light_component_spec
-      ]
+      components: [state_machine]
     })
 ```
 
-> #### Tip {: .info}
->
-> You can call the function to create the state machine directly in the list of components for your entity (step 2 above).
+#### Defining States
 
-### Starting your state machine
+A state definition is a keyword list with the following keys. :name is the only required key but most states will also include :exits.
 
-The default behavior is to automatically start a state machine. If you don't want that behavior, then you can 'set auto_start to false' and call `EcspanseStateMachine.request_start` when you're ready.
+States that have at least one exit have a **default exit**. The default exit is the first exit in the :exits list unless specified by the :default_exit keyword.
 
-Auto start is an option, the third parameter to EcspanseStateMachine.state_machine().
+States that have timeout will transition to the default exit. The Api provides a convenience function for transitioning to the default exit.
+
+- **:name** - A State must have a unique name (an atom or String).
+- **:exits** - Exits is a list of state names that can be transitioned to from this state. The majority of your states will have at least one value. Terminal states will not have any.
+- **:default_exit** - The state to transition to by default. The default exit must be in the list of exits.
+- **:timeout** - The number of milliseconds to be in this state before automatically transitioning to the default exit.
+
+##### Examples
 
 ```elixir
-    traffic_light =
-      Ecspanse.Command.spawn_entity!({
-        Ecspanse.Entity,
-        components: [
-          EcspanseStateMachine.state_machine(:red, [
-            [name: :red, exits_to: [:green, :flashing_red]],
-            [name: :flashing_red, exits_to: [:red]],
-            [name: :green, exits_to: [:yellow]],
-            [name: :yellow, exits_to: [:red]]
-          ], false)
-        ]
-      })
+  # This is a terminal state since it has no exits.  The state machine will stop once it enters a terminal state.
+  [name: :die]
+
+  # The :fight state can transition to :idle or :die. You must call a transition function on the api to change from the :fight state since there is no :timeout.
+  [name: :fight, exits: [:idle, :die]],
+
+  # :idle can transition to :patrol or :fight.  You can use the api to transition to either state.
+  # After 5 seconds (the :timeout), the state will transition to :patrol.
+  # :patrol is the default exit state since it is first in the :exits list and :default_exit isn't specified
+  [name: :idle, exits: [:patrol, :fight], timeout: 5_000]
+
+  # :patrol can transition to :fight or :idle.  You can use the api to transition to either state.
+  # After 10 seconds (the :timeout), the state will transition to :idle.
+  # :idle is the default exit state since it is specified as the :default_exit.
+  [name: :patrol, exits: [:fight, :idle], timeout: 10_000, default_exit: :idle]
+```
+
+#### Starting your state machine
+
+The default behavior is to automatically start a state machine. If you don't want that behavior, then you can 'set auto_start to false' and call `EcspanseStateMachine.start` when you're ready.
+
+Auto start is an option, the third parameter to EcspanseStateMachine.new(). Here's an example of turning off auto_start and then starting the state machine later.
+
+```elixir
+  state_machine =
+    EcspanseStateMachine.new(
+      :idle,
+      [
+        [name: :idle, exits: [:patrol, :fight], timeout: 5_000],
+        [name: :patrol, exits: [:fight, :idle], timeout: 10_000, default_exit: :idle],
+        [name: :fight, exits: [:idle, :die]],
+        [name: :die]
+      ],
+      auto_start: false
+    )
+
+  entity = Ecspanse.Command.spawn_entity!({
+    Ecspanse.Entity,
+    components: [ state_machine]
+  })
 
   # some time later
-  EcspanseStateMachine.request_start(traffic_light.id)
+  EcspanseStateMachine.start(entity.id)
 ```
-
-### Adding timeouts
-
-The State timer component adds changing state on timeout. You add it to your entity's spec in the components list just like you did with the state machine. `EcspanseStateMachine.state_timer` is a convenience API function to create the state timer component.
-
-```elixir
-    traffic_light_with_timer =
-      Ecspanse.Command.spawn_entity!({
-        Ecspanse.Entity,
-        components: [
-          EcspanseStateMachine.state_machine(:red, [
-            [name: :red, exits_to: [:green, :flashing_red]],
-            [name: :flashing_red, exits_to: [:red]],
-            [name: :green, exits_to: [:yellow]],
-            [name: :yellow, exits_to: [:red]]
-          ]),
-          EcspanseStateMachine.state_timer([
-            [name: :red, duration: :timer.seconds(30), exits_to: :green],
-            [name: :green, duration: :timer.seconds(10), exits_to: :yellow],
-            [name: :yellow, duration: :timer.seconds(5), exits_to: :red]
-          ])
-        ]
-      })
-```
-
-Now your state machine will automatically change states when timeouts occur. In this example, :red will transition to :green after 30 seconds.
-
-**_note:_** You can still change state through the api before the timer elapses.
 
 ### Listen for state changes
 
@@ -160,24 +163,24 @@ defmodule OnStateChanged do
 end
 ```
 
-### Request a state change
+### Command a state change
 
-State changes happen when a timeout elapses or upon request. Call `ECSPanseStateMachine.request_transition` to trigger a transition.
+State changes happen when a timeout elapses or upon request. Call `EcspanseStateMachine.transition` to trigger a transition.
 
 ```elixir
-  EcspanseStateMachine.request_transition(entity_id, :red, :flashing_red)
+  EcspanseStateMachine.transition(entity_id, :fight, :idle)
 ```
 
-Here were changing state from :red to :flashing_red.
+Here were changing state from :fight to :idle.
 
 ### Stopping a state machine
 
 The state machine will automatically stop when it reaches a state no exits.
 
-You can stop a state machine anytime by calling `ECSpanseStateMachine.request_stop`.
+You can stop a state machine anytime by calling `EcspanseStateMachine.stop`.
 
 ```elixir
-  EcspanseStateMachine.request_stop(entity_id)
+  EcspanseStateMachine.stop(entity_id)
 ```
 
 ## Telemetry
@@ -193,24 +196,29 @@ ECSpanse State Machine implements telemetry for the following events.
 
 ## Mermaid State Diagrams
 
-ECSpanseStateMachine generates [Mermaid.js](https://mermaid.js.org/) state diagrams for your state machines and state timers.
+ECSpanseStateMachine generates [Mermaid.js](https://mermaid.js.org/) state diagrams for your state machines.
 
 ```elixir
-  EcspanseStateMachine.as_mermaid_diagram(entity_id)
+  EcspanseStateMachine.format_as_mermaid_diagram(entity_id)
 ```
 
 Here's an example output.
 
 ```
+---
+title: Simple AI
+---
 stateDiagram-v2
-  [*] --> red
-  flashing_red --> red
-  green --> yellow: ⏲️
-  red --> flashing_red
-  red --> green: ⏲️
-  yellow --> red: ⏲️
+[*] --> idle
+fight --> die
+fight --> idle
+idle --> fight
+idle --> patrol: ⏲️
+patrol --> fight
+patrol --> idle: ⏲️
+die --> [*]
 ```
 
 Which produces the following state diagram when rendered
 
-[![](https://mermaid.ink/img/pako:eNpNkD0OwjAMha8SeUTtwpiBiZWJkSBkNW4bkR-UpqCq6hl6FybOwwW4Ammrqtn8vvcs-bmHwkkCDk3AQEeFlUeTP_fCMnbZXVmeH5gnOclSY1MrW92iTvkqU3_iHWntXmuSs-_4_n3GdKPyRDY1ZjBby_LmQQaGvEEl4639lBUQajIkgMdRor8LEHaIOWyDO3e2AB58Sxm0D7lVA16ibiIlqYLzp6X8_IPhD-E_XkE?type=png)](https://mermaid.live/edit#pako:eNpNkD0OwjAMha8SeUTtwpiBiZWJkSBkNW4bkR-UpqCq6hl6FybOwwW4Ammrqtn8vvcs-bmHwkkCDk3AQEeFlUeTP_fCMnbZXVmeH5gnOclSY1MrW92iTvkqU3_iHWntXmuSs-_4_n3GdKPyRDY1ZjBby_LmQQaGvEEl4639lBUQajIkgMdRor8LEHaIOWyDO3e2AB58Sxm0D7lVA16ibiIlqYLzp6X8_IPhD-E_XkE)
+[![](https://mermaid.ink/img/pako:eNpVkD0OwjAMha8SeURkYcyAhMTCwMSIGSLilojErYKLhFDP0LswcR4uwBUI6UBZLH_Pz_LPHY6NIzCgtUYWL4GM2vnYBlKrDXKRL2KF1t7WyUZ9XSDvZwel9VJ5Fwi58vVJCjv_h2P5GwuWwoRbK6kJRr2Gx_s5II88tU6Ub9fPmgcVNS8Cc4iUovUuX3FHVgpBThQJweTU2XRGQO6zz3bS7G58BCOpozl0rfsdBqay4ZJVcl6atB3fUr7TfwD9smWR?type=png)](https://mermaid.live/edit#pako:eNpVkD0OwjAMha8SeURkYcyAhMTCwMSIGSLilojErYKLhFDP0LswcR4uwBUI6UBZLH_Pz_LPHY6NIzCgtUYWL4GM2vnYBlKrDXKRL2KF1t7WyUZ9XSDvZwel9VJ5Fwi58vVJCjv_h2P5GwuWwoRbK6kJRr2Gx_s5II88tU6Ub9fPmgcVNS8Cc4iUovUuX3FHVgpBThQJweTU2XRGQO6zz3bS7G58BCOpozl0rfsdBqay4ZJVcl6atB3fUr7TfwD9smWR)

@@ -1,157 +1,48 @@
 defmodule EcspanseStateMachine do
   @moduledoc """
-  `EcspanseStateMachine`.
+  ECSpanse State Machine Api
   """
-  alias EcspanseStateMachine.Projections
   alias EcspanseStateMachine.Components
-  alias EcspanseStateMachine.Internal
+  alias EcspanseStateMachine.Internal.Engine
+  alias EcspanseStateMachine.Internal.Mermaid
+  alias EcspanseStateMachine.Internal.Projector
+  alias EcspanseStateMachine.Internal.Systems
 
-  @spec as_mermaid_diagram(Ecspanse.Entity.id()) ::
+  @type state_name :: atom() | String.t()
+
+  @spec format_as_mermaid_diagram(Ecspanse.Entity.id(), String.t()) ::
           {:ok, String.t()} | {:error, :not_found}
   @doc """
-  Generates the source for a Mermaid State Diagram
+  Generates the source for a [Mermaid State Diagram](https://mermaid.js.org)
 
   ## Parameters
     - title: The diagram will have this title (optional)
   """
-  def as_mermaid_diagram(entity_id, title \\ "") do
-    Internal.Mermaid.as_state_diagram(entity_id, title)
-  end
-
-  @spec request_transition(
-          Ecspanse.Entity.id(),
-          atom() | String.t(),
-          atom() | String.t(),
-          atom() | String.t()
-        ) ::
-          :ok | {:error, :not_found}
-  @doc """
-  Submits a request to transition from one state to another.
-
-  This will trigger a state change so long as
-  * the state machine is running
-  * the from state is the machines's current state
-  * the to state is valid from the current state
-
-  ## Parameters
-    - from: the state to transition from
-    - to: the state to transition to
-    - trigger: the reason for the transition
-  """
-  def request_transition(entity_id, from, to, trigger \\ :request) do
-    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
-         {:ok, _state_machine} <- Components.StateMachine.fetch(entity) do
-      Ecspanse.event(
-        {Internal.Events.TransitionRequest,
-         [
-           entity_id: entity_id,
-           from: from,
-           to: to,
-           trigger: trigger
-         ]}
-      )
-    end
-  end
-
-  @spec fetch_current(Ecspanse.Entity.id()) ::
-          {:ok, atom() | String.t()} | {:error, :not_found} | {:error, :not_running}
-  @doc """
-  Returns the current state of the state machine
-  """
-  def fetch_current(entity_id) do
+  def format_as_mermaid_diagram(entity_id, title \\ "") do
     with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
          {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
-      if state_machine.is_running do
-        {:ok, state_machine.current_state}
-      else
-        {:error, :not_running}
-      end
+      Mermaid.as_state_diagram(state_machine, title)
     end
   end
 
-  @spec fetch_states(Ecspanse.Entity.id()) :: {:ok, list()} | {:error, :not_found}
-  @doc """
-  Returns a list of state names
-  """
-  def fetch_states(entity_id) do
-    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
-         {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
-      states = state_machine.states |> Enum.map(& &1[:name])
-      {:ok, states}
-    end
-  end
-
-  @spec fetch_state_exits_to(Ecspanse.Entity.id(), atom() | String.t()) ::
-          {:ok, list()} | {:error, :not_found}
-  @doc """
-  Returns the exits_to states for the named state
-  """
-  def fetch_state_exits_to(entity_id, name) do
-    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
-         {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
-      case Components.StateMachine.get_exits_to(state_machine, name) do
-        nil -> {:error, :not_found}
-        exits_to -> {:ok, exits_to}
-      end
-    end
-  end
-
-  @doc """
-  setup is to be called when registering ECSpanse systems in your manager.
-
-  ## Examples
-      def setup(data) do
-        data
-        |> EcspanseStateMachine.setup()
-        #
-        # Your registrations here
-        #
-        # Be sure to setup the Ecspanse.System.Timer if you have any timeouts
-        |> Ecspanse.add_frame_end_system(Ecspanse.System.Timer)
-      end
-  """
-  @spec setup(Ecspanse.Data.t()) :: Ecspanse.Data.t()
-  def setup(data) do
-    data
-    |> Ecspanse.add_frame_start_system(Internal.Systems.AutoStarter)
-    |> Ecspanse.add_frame_start_system(Internal.Systems.OnStartRequest)
-    |> Ecspanse.add_frame_start_system(Internal.Systems.OnStopRequest)
-    |> Ecspanse.add_frame_start_system(Internal.Systems.OnStateChanged)
-    |> Ecspanse.add_frame_start_system(Internal.Systems.OnStopped)
-    |> Ecspanse.add_frame_start_system(Internal.Systems.OnStateTimeout)
-    |> Ecspanse.add_frame_start_system(Internal.Systems.OnTransitionRequest)
-  end
-
-  @spec request_start(Ecspanse.Entity.id()) ::
-          :ok | {:error, :not_found}
-  @doc """
-  Submits a request to start a state machine
-  """
-  def request_start(entity_id) do
-    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
-         {:ok, _state_machine} <- Components.StateMachine.fetch(entity) do
-      Ecspanse.event({Internal.Events.StartRequest, [entity_id: entity_id]})
-    end
-  end
-
-  @spec state_machine(atom() | String.t(), list(Keyword.t()), Keyword.t()) ::
+  @spec new(state_name(), list(Keyword.t()), Keyword.t()) ::
           Ecspanse.Component.component_spec()
   @doc """
-  Creates a component_spec for a State Machine
+  Creates a [component_spec](https://hexdocs.pm/ecspanse/Ecspanse.Component.html#t:component_spec/0) for a State Machine
 
   ## Options
     auto_start: boolean - if true, the state machine will start automatically
 
   ## Examples
-      traffic_light_component_spec =
-        EcspanseStateMachine.state_machine(:red, [
-          [name: :red, exits_to: [:green, :flashing_red]],
-          [name: :flashing_red, exits_to: [:red]],
-         [name: :green, exits_to: [:yellow]],
-         [name: :yellow, exits_to: [:red]]
+      state_machine =
+        EcspanseStateMachine.new(:red, [
+          [name: :red, exits: [:green, :flashing_red], timeout: 30_000],
+          [name: :flashing_red, exits: [:red]],
+          [name: :green, exits: [:yellow], timeout: 10_000, default_exit: :yellow],
+          [name: :yellow, exits: [:red]]
         ])
   """
-  def state_machine(initial_state, states, opts \\ [auto_start: true]) do
+  def new(initial_state, states, opts \\ []) do
     {Components.StateMachine,
      [
        initial_state: initial_state,
@@ -160,51 +51,99 @@ defmodule EcspanseStateMachine do
      ]}
   end
 
-  @spec state_timer(list(Keyword.t())) ::
-          Ecspanse.Component.component_spec()
   @doc """
-  Creates a component_spec for a State Timer
-  """
-  def state_timer(timeouts) do
-    {Components.StateTimer, [timeouts: timeouts]}
-  end
-
-  @spec request_stop(Ecspanse.Entity.id()) ::
-          :ok | {:error, :not_found}
-  @doc """
-  Submits a request to stop a state machine
-  """
-  def request_stop(entity_id) do
-    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
-         {:ok, _state_machine} <- Components.StateMachine.fetch(entity) do
-      Ecspanse.event({Internal.Events.StopRequest, [entity_id: entity_id]})
-    end
-  end
-
-  # @spec project(Ecspanse.Entity.id()) ::
-  #         {:ok, {Projections.StateMachine.project(t(), Projections.State} | {:error, :not_found}
-  @doc """
-  Returns a projection of the state machine
+  Returns a map of the state_machine to use in your [projections](https://hexdocs.pm/ecspanse/Ecspanse.Projection.html).
   """
   def project(entity_id) when is_binary(entity_id) do
-    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id) do
-      project(entity)
+    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
+         {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
+      Projector.project(state_machine)
     end
   end
 
-  def project(entity) do
-    state_machine_projection =
-      case Projections.StateMachine.project(%{entity_id: entity.id}) do
-        {:ok, projection} -> projection
-        _ -> nil
-      end
+  @doc """
+  Registers the state machine systems with the ECSpanse manager.
 
-    state_timer_projection =
-      case Projections.StateTimer.project(%{entity_id: entity.id}) do
-        {:ok, projection} -> projection
-        _ -> nil
-      end
+  Call this from your setup(data) function. [See ECSpanse Setup](https://hexdocs.pm/ecspanse/getting_started.html#setup)
 
-    {state_machine_projection, state_timer_projection}
+  ## Examples
+      def setup(data) do
+        data
+        |> EcspanseStateMachine.setup()
+        #
+        # Your registrations here
+        #
+        # Be sure to setup the Ecspanse.System.Timer if you have any 73s
+        |> Ecspanse.add_frame_end_system(Ecspanse.System.Timer)
+      end
+  """
+  @spec setup(Ecspanse.Data.t()) :: Ecspanse.Data.t()
+  def setup(data) do
+    data
+    |> Ecspanse.add_frame_start_system(Systems.AutoStarter)
+    |> Ecspanse.add_frame_start_system(Systems.OnStateTimeout)
+  end
+
+  @spec start(Ecspanse.Entity.id()) :: :ok | {:error, :already_running} | {:error, :not_found}
+  @doc """
+  Starts the state machine
+  """
+  def start(entity_id) do
+    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
+         {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
+      Engine.start(state_machine)
+    end
+  end
+
+  @spec stop(Ecspanse.Entity.id()) :: :ok | {:error, :not_running} | {:error, :not_found}
+  @doc """
+  Stops a state machine
+  """
+  def stop(entity_id) do
+    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
+         {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
+      Engine.stop(state_machine)
+    end
+  end
+
+  @spec transition(Ecspanse.Entity.id(), state_name(), state_name(), any()) ::
+          :ok | {:error, :not_found}
+  @doc """
+  Triggers a state change
+
+  * the state machine is needs to be running
+  * the from state must be the current state
+  * the to state must be in the current state's exits
+
+  ## Parameters
+    - from: the state to transition from
+    - to: the state to transition to
+    - trigger: the reason for the transition
+  """
+  def transition(entity_id, from, to, trigger \\ :request) do
+    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
+         {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
+      Engine.transition(state_machine, from, to, trigger)
+    end
+  end
+
+  @spec transition_to_default_exit(Ecspanse.Entity.id(), state_name(), any) ::
+          :ok | {:error, :not_found}
+  @doc """
+  Triggers a state change to the default exit
+
+  * the state machine is needs to be running
+  * the from state must be the current state
+  * the from state must have an exit
+
+  ## Parameters
+    - from: the state to transition from
+    - trigger: the reason for the transition
+  """
+  def transition_to_default_exit(entity_id, from, trigger \\ :request) do
+    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
+         {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
+      Engine.transition_to_default_exit(state_machine, from, trigger)
+    end
   end
 end

@@ -2,52 +2,73 @@ ExUnit.start()
 
 defmodule Examples do
   @moduledoc false
+
+  def simple_ai() do
+    state_machine =
+      EcspanseStateMachine.new(
+        :idle,
+        [
+          [name: :idle, exits: [:patrol, :fight], timeout: 5_000],
+          [name: :patrol, exits: [:fight, :idle], timeout: 10_000, default_exit: :idle],
+          [name: :fight, exits: [:idle, :die]],
+          [name: :die]
+        ],
+        auto_start: false
+      )
+
+    Ecspanse.Command.spawn_entity!({
+      Ecspanse.Entity,
+      components: [state_machine]
+    })
+  end
+
   def traffic_light() do
-    traffic_light_component_spec =
-      EcspanseStateMachine.state_machine(:red, [
-        [name: :red, exits_to: [:green, :flashing_red]],
-        [name: :flashing_red, exits_to: [:red]],
-        [name: :green, exits_to: [:yellow]],
-        [name: :yellow, exits_to: [:red]]
+    state_machine =
+      EcspanseStateMachine.new(:red, [
+        [name: :red, exits: [:green, :flashing_red]],
+        [name: :flashing_red, exits: [:red]],
+        [name: :green, exits: [:yellow]],
+        [name: :yellow, exits: [:red]]
       ])
 
     Ecspanse.Command.spawn_entity!({
       Ecspanse.Entity,
       components: [
-        traffic_light_component_spec
+        state_machine
       ]
     })
   end
 
-  def traffic_light_with_timer() do
+  def traffic_light_with_timeouts() do
     Ecspanse.Command.spawn_entity!({
       Ecspanse.Entity,
       components: [
-        EcspanseStateMachine.state_machine(:red, [
-          [name: :red, exits_to: [:green, :flashing_red]],
-          [name: :flashing_red, exits_to: [:red]],
-          [name: :green, exits_to: [:yellow]],
-          [name: :yellow, exits_to: [:red]]
-        ]),
-        EcspanseStateMachine.state_timer([
-          [name: :red, duration: :timer.seconds(30), exits_to: :green],
-          [name: :green, duration: :timer.seconds(10), exits_to: :yellow],
-          [name: :yellow, duration: :timer.seconds(5), exits_to: :red]
+        EcspanseStateMachine.new(:red, [
+          [
+            name: :red,
+            exits: [:green, :flashing_red],
+            timeout: 30_000,
+            default_exit: :green
+          ],
+          [name: :flashing_red, exits: [:red]],
+          [name: :green, exits: [:yellow], timeout: 10_000],
+          [name: :yellow, exits: [:red], timeout: 5_000]
         ])
       ]
     })
   end
 
-  def game_turn_loop() do
+  def mixed_state_names() do
     Ecspanse.Command.spawn_entity!({
       Ecspanse.Entity,
       components: [
-        EcspanseStateMachine.state_machine("turn starts", [
-          [name: "turn starts", exits_to: ["player 1"]],
-          [name: "player 1", exits_to: ["player 2"]],
-          [name: "player 2", exits_to: [:player3]],
-          [name: :player3, exits_to: [:turn_end]],
-          [name: :turn_end, exits_to: ["turn starts"]]
+        EcspanseStateMachine.new("turn starts", [
+          [name: "turn starts", exits: ["player 1"]],
+          [name: "player 1", exits: ["player 2"]],
+          [name: "player 2", exits: [:player3]],
+          [name: :player3, exits: [:turn_end]],
+          [name: :turn_end, exits: ["turn starts", :battle_end]],
+          [name: :battle_end]
         ])
       ]
     })

@@ -2,8 +2,8 @@ defmodule EcspanseStateMachine.Internal.Telemetry do
   @moduledoc false
   # Executes Telemetry events for the State Machine
 
-  alias EcspanseStateMachine.Projections
   alias EcspanseStateMachine.Components.StateMachine
+  alias EcspanseStateMachine.Internal.Projector
 
   # @doc false
   # def exception(event, start_time, kind, reason, stack, meta \\ %{}, extra_measurements \\ %{}) do
@@ -19,7 +19,7 @@ defmodule EcspanseStateMachine.Internal.Telemetry do
 
   @doc false
   def start(%StateMachine{} = state_machine, start_time) do
-    with {:ok, meta} <- Projections.StateMachine.project(state_machine) do
+    with {:ok, meta} <- Projector.project(state_machine) do
       :telemetry.execute(
         [:ecspanse_state_machine, :start],
         %{system_time: start_time},
@@ -29,7 +29,7 @@ defmodule EcspanseStateMachine.Internal.Telemetry do
   end
 
   def start(%StateMachine{} = state_machine, state, start_time) do
-    with {:ok, meta} <- Projections.StateMachine.project(state_machine) do
+    with {:ok, meta} <- Projector.project(state_machine) do
       :telemetry.execute(
         [:ecspanse_state_machine, :state, :start],
         %{system_time: start_time},
@@ -42,7 +42,7 @@ defmodule EcspanseStateMachine.Internal.Telemetry do
   Executes a stop for the state machine
   """
   def stop(%StateMachine{} = state_machine, start_time) do
-    with {:ok, state_machine_meta} <- Projections.StateMachine.project(state_machine) do
+    with {:ok, state_machine_meta} <- Projector.project(state_machine) do
       :telemetry.execute(
         [:ecspanse_state_machine, :stop],
         %{duration: System.monotonic_time() - start_time},
@@ -55,7 +55,7 @@ defmodule EcspanseStateMachine.Internal.Telemetry do
   Executes a stop for the given state.
   """
   def stop(%StateMachine{} = state_machine, state, start_time) do
-    with {:ok, state_machine_meta} <- Projections.StateMachine.project(state_machine) do
+    with {:ok, state_machine_meta} <- Projector.project(state_machine) do
       :telemetry.execute(
         [:ecspanse_state_machine, :state, :stop],
         %{duration: System.monotonic_time() - start_time},

@@ -18,46 +18,32 @@ defmodule StateMachineComponentValidationTest do
   end
 
   test "manual traffic light spawns" do
-    entity =
-      Ecspanse.Command.spawn_entity!({
-        Ecspanse.Entity,
-        components: [
-          EcspanseStateMachine.state_machine(
-            :red,
-            [
-              [name: :red, exits_to: [:green, :flashing_red]],
-              [name: :flashing_red, exits_to: [:green, :red]],
-              [name: :green, exits_to: [:yellow]],
-              [name: :yellow, exits_to: [:red]]
-            ]
-          )
-        ]
-      })
-
+    entity = Examples.traffic_light()
     assert entity != nil
   end
 
-  describe "state_machine/3" do
+  describe "new/3" do
     test "returns a component spec" do
       initial_state = :initial
-      states = [name: initial_state, exits_to: [initial_state]]
+      states = [name: initial_state, exits: [initial_state]]
 
-      result = EcspanseStateMachine.state_machine(initial_state, states)
+      result = EcspanseStateMachine.new(initial_state, states, auto_start: false)
 
       assert result != nil
       assert elem(result, 0) == EcspanseStateMachine.Components.StateMachine
       assert Keyword.get(elem(result, 1), :initial_state) == initial_state
       assert Keyword.get(elem(result, 1), :states) == states
+      assert Keyword.get(elem(result, 1), :auto_start) == false
     end
 
     test "sets auto_start to true by default" do
-      result = EcspanseStateMachine.state_machine(:initial, [])
+      result = EcspanseStateMachine.new(:initial, [])
 
       assert Keyword.get(elem(result, 1), :auto_start) == true
     end
 
     test "sets auto_start to provided value" do
-      result = EcspanseStateMachine.state_machine(:initial, [], auto_start: false)
+      result = EcspanseStateMachine.new(:initial, [], auto_start: false)
 
       assert Keyword.get(elem(result, 1), :auto_start) == false
     end

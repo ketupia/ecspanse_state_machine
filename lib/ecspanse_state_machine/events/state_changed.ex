@@ -6,7 +6,7 @@ defmodule EcspanseStateMachine.Events.StateChanged do
   * entity_id: the id of the entity with the state machine
   * from: the previous state
   * to: the current state
-  * trigger: the trigger for the transition (e.g. :timeout, :startup, :requested)
+  * trigger: the trigger for the transition (e.g. :timeout, :startup, :request)
 
   ## Examples
       %StateChanged{entity_id: "78d51554-83c6-4c66-b043-a5bd71a2f2ce",
