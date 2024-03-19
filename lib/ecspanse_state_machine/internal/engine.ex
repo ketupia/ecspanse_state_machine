@@ -3,12 +3,22 @@ defmodule EcspanseStateMachine.Internal.Engine do
 
   # Procedures to operate state machines
 
+  alias EcspanseStateMachine.Components.StateMachine
   alias EcspanseStateMachine.Components
   alias EcspanseStateMachine.Events
   alias EcspanseStateMachine.Internal.StateSpec
   alias EcspanseStateMachine.Internal.Telemetry
+  use EcspanseStateMachine.Types
 
-  @type state_name() :: atom() | String.t()
+  @spec current_state(StateMachine.t()) :: {:ok, state_name()} | {:error, :not_running}
+  @doc """
+  Retrieves the current state of the state machine in the given entity so long as it is running.
+  """
+  def current_state(%StateMachine{} = state_machine) do
+    with :ok <- ensure_is_running(state_machine) do
+      {:ok, state_machine.current_state}
+    end
+  end
 
   @spec ensure_from_matches_current_state(any(), state_name()) :: :ok | {:error, String.t()}
   defp ensure_from_matches_current_state(state_machine, from) do

@@ -4,6 +4,7 @@ defmodule EcspanseStateMachine.MixProject do
   @name "ECSpanse State Machine"
   @version "0.3.0"
   @description "A State Machine for ECSpanse, an Entity Component System for Elixir"
+  @source_url "https://github.com/ketupia/ecspanse_state_machine"
 
   def project do
     [
@@ -14,14 +15,13 @@ defmodule EcspanseStateMachine.MixProject do
       elixir: "~> 1.16",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      source_url: "https://github.com/ketupia/ecspanse_state_machine",
+      source_url: @source_url,
       # homepage_url: "http://YOUR_PROJECT_HOMEPAGE",
-      docs: [
-        # The main page in the docs
-        main: "EcspanseStateMachine",
-        # logo: "path/to/logo.png",
-        extras: ["README.md"]
-      ]
+
+      # hex
+      description: @description,
+      package: package(),
+      docs: docs()
     ]
   end
 
@@ -40,6 +40,24 @@ defmodule EcspanseStateMachine.MixProject do
       {:ecspanse, "~> 0.8.1"},
       {:ex_doc, "~> 0.31", only: :dev, runtime: false},
       {:telemetry, ">= 1.2.0"}
+    ]
+  end
+
+  defp docs do
+    [
+      # The main page in the docs
+      main: "EcspanseStateMachine",
+      # logo: "path/to/logo.png",
+      extras: ["README.md"],
+      source_ref: "v#{@version}"
+    ]
+  end
+
+  defp package do
+    [
+      maintainers: ["Kevin Bolton"],
+      licenses: ["Apache-2.0"],
+      links: %{"GitHub" => @source_url}
     ]
   end
 end

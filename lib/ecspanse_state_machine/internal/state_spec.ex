@@ -6,8 +6,7 @@ defmodule EcspanseStateMachine.Internal.StateSpec do
   #   * exits, list(names), optional
   #   * timeout, pos_integer(),  optional
   #   * default_exit, name, optional
-
-  @type state_name() :: atom() | String.t()
+  use EcspanseStateMachine.Types
 
   @spec has_timeout?(keyword()) :: boolean()
   def has_timeout?(state), do: timeout(state) != nil

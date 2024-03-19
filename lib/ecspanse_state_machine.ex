@@ -7,8 +7,19 @@ defmodule EcspanseStateMachine do
   alias EcspanseStateMachine.Internal.Mermaid
   alias EcspanseStateMachine.Internal.Projector
   alias EcspanseStateMachine.Internal.Systems
+  use EcspanseStateMachine.Types
 
-  @type state_name :: atom() | String.t()
+  @spec current_state(Ecspanse.Entity.id()) ::
+          {:ok, state_name()} | {:error, :not_found} | {:error, :not_running}
+  @doc """
+  Retrieves the current state of the state machine in the given entity if it is running.
+  """
+  def current_state(entity_id) do
+    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
+         {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
+      Engine.current_state(state_machine)
+    end
+  end
 
   @spec format_as_mermaid_diagram(Ecspanse.Entity.id(), String.t()) ::
           {:ok, String.t()} | {:error, :not_found}

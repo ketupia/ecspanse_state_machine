@@ -9,8 +9,7 @@ defmodule EcspanseStateMachine.Components.StateMachine do
   * auto_start: if true, the machine will be automatically started
   """
   alias EcspanseStateMachine.Internal.StateSpec
-
-  @type state_name() :: atom() | String.t()
+  use EcspanseStateMachine.Types
 
   use Ecspanse.Template.Component.Timer,
     state: [
