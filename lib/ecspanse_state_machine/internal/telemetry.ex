@@ -5,7 +5,6 @@ defmodule EcspanseStateMachine.Internal.Telemetry do
   alias EcspanseStateMachine.Components.StateMachine
   alias EcspanseStateMachine.Internal.Projector
 
-  # @doc false
   # def exception(event, start_time, kind, reason, stack, meta \\ %{}, extra_measurements \\ %{}) do
   #   :telemetry.execute(
   #     [:ecspanse_state_machine, event, :exception],
@@ -17,7 +16,6 @@ defmodule EcspanseStateMachine.Internal.Telemetry do
   #   )
   # end
 
-  @doc false
   def start(%StateMachine{} = state_machine, start_time) do
     with {:ok, meta} <- Projector.project(state_machine) do
       :telemetry.execute(

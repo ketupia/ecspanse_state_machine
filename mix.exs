@@ -2,7 +2,7 @@ defmodule EcspanseStateMachine.MixProject do
   use Mix.Project
 
   @name "ECSpanse State Machine"
-  @version "0.3.0"
+  @version "0.3.1"
   @description "A State Machine for ECSpanse, an Entity Component System for Elixir"
   @source_url "https://github.com/ketupia/ecspanse_state_machine"
 

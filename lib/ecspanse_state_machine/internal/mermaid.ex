@@ -6,11 +6,10 @@ defmodule EcspanseStateMachine.Internal.Mermaid do
   alias EcspanseStateMachine.Components
   require Logger
 
-  @spec as_state_diagram(any(), String.t()) ::
-          {:ok, String.t()}
   @doc """
   Returns the source for a sequence diagram of the state machine
   """
+  @spec as_state_diagram(any(), String.t()) :: {:ok, String.t()}
   def as_state_diagram(%Components.StateMachine{} = state_machine, title) do
     diagram =
       [
@@ -66,8 +65,9 @@ title: #{title}
       {_, "[*]", _, _} ->
         false
 
-      {_, _, "[*]", _} ->
-        false
+      # this can't happen because the list starts with the initial state
+      # {_, _, "[*]", _} ->
+      # false
 
       {_, _, _, "[*]"} ->
         true

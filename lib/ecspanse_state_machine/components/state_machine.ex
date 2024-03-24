@@ -19,7 +19,6 @@ defmodule EcspanseStateMachine.Components.StateMachine do
       :states,
       :telemetry_start_time,
       :telemetry_state_start_time,
-      :timing_state,
       is_running: false,
       duration: 5_000,
       time: 5_000,
@@ -29,14 +28,7 @@ defmodule EcspanseStateMachine.Components.StateMachine do
     ],
     tags: [:ecspanse_state_machine]
 
-  @spec flatten(any()) :: list(state_name())
-  @doc """
-  Produces a list of states visited via depth first
-  """
-  def flatten(%__MODULE__{} = state_machine) do
-    flatten_states(state_machine.states, state_machine.initial_state)
-  end
-
+  # Produces a list of states visited via depth first
   defp flatten_states(states, initial_state) when is_list(states) do
     states_by_name =
       states
@@ -64,10 +56,10 @@ defmodule EcspanseStateMachine.Components.StateMachine do
     end
   end
 
-  @spec get_state_spec(any(), state_name()) :: keyword() | {:error, String.t()}
   @doc """
   Retrieves the keyword list with the provided name
   """
+  @spec get_state_spec(any(), state_name()) :: keyword() | {:error, String.t()}
   def get_state_spec(%__MODULE__{} = state_machine, name) do
     Enum.find(
       state_machine.states,
@@ -77,13 +69,30 @@ defmodule EcspanseStateMachine.Components.StateMachine do
   end
 
   def validate(component) do
-    state_names = Enum.map(component.states, &StateSpec.name(&1))
+    with :ok <- validate_at_least_one_state(component.states),
+         :ok <- validate_all_have_names(component.states) do
+      state_names = Enum.map(component.states, &StateSpec.name(&1))
 
-    with :ok <- validate_state_specs(component.states),
-         :ok <- validate_unique_state_names(state_names),
-         :ok <- validate_initial_state_exists(state_names, component.initial_state),
-         :ok <- validate_exit_states_exist(state_names, component.states) do
-      validate_all_states_reachable(state_names, component.states, component.initial_state)
+      with :ok <- validate_state_specs(component.states),
+           :ok <- validate_unique_state_names(state_names),
+           :ok <- validate_initial_state_exists(state_names, component.initial_state),
+           :ok <- validate_exit_states_exist(state_names, component.states) do
+        validate_all_states_reachable(state_names, component.states, component.initial_state)
+      end
+    end
+  end
+
+  defp validate_all_have_names(states) do
+    case Enum.all?(states, &Keyword.has_key?(&1, :name)) do
+      true -> :ok
+      false -> {:error, "Every state must have a name"}
+    end
+  end
+
+  defp validate_at_least_one_state(states) do
+    case Enum.any?(states) do
+      true -> :ok
+      false -> {:error, "State Machines must have at least 1 state"}
     end
   end
 

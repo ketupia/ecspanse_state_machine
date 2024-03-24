@@ -1,6 +1,14 @@
 # EcspanseStateMachine
 
-`ECSpanse State Machine` is a state machine implementation for [`ECSpanse`](https://hexdocs.pm/ecspanse). It is an Ecspanse component you include in your entities.
+[![Hex Version](https://img.shields.io/hexpm/v/ecspanse_state_machine.svg)](https://hex.pm/packages/ecspanse_state_machine)
+![GitHub CI](https://github.com/ketupia/ecspanse_state_machine/actions/workflows/elixir.yml/badge.svg)
+[![Documentation](https://img.shields.io/badge/documentation-gray)](https://hexdocs.pm/ecspanse_state_machine)
+
+<!-- [![License](https://img.shields.io/hexpm/l/ecspanse_state_machine.svg)](https://github.com/ketupia/ecspanse_state_machine/blob/72dd2045a8ca217b7b07529ac43780d0a3145e50/README.md) -->
+
+<!-- ![Elixir](https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/ketupia/ecspanse_state_machine/master/.github/workflows/elixir.yml&query=$.jobs.build.steps[1].with["elixir-version"]&label=Elixir) -->
+
+`ECSpanse State Machine` is a component level state machine implementation for [`ECSpanse`](https://hexdocs.pm/ecspanse). It is an Ecspanse component you include in your entities.
 
 [![](https://mermaid.ink/img/pako:eNpVkDEOwjAMRa8SeUTNwpgBCYmFgYkRM0SNaSOStEpdJFT1DNyFifNwAa5Amg6UJcp7_pFjD1A2hkCBlBIDW3akxNH61pHY7jFkjaFjzbSzuoray9t6UqfVWUi5EdY4wnCxVc2Zjf3DuTydGXNhwa3m2Dgl3o_n5_XAMPMyujDTq180Nco2fQQK8BS9tiZNMmAQAoFr8oSg0tXoeEXAMKac7rk53kMJimNPBfSt-Y0G6qJdlywZy008zKvJGxq_xZBnJQ?type=png)](https://mermaid.live/edit#pako:eNpVkDEOwjAMRa8SeUTNwpgBCYmFgYkRM0SNaSOStEpdJFT1DNyFifNwAa5Amg6UJcp7_pFjD1A2hkCBlBIDW3akxNH61pHY7jFkjaFjzbSzuoray9t6UqfVWUi5EdY4wnCxVc2Zjf3DuTydGXNhwa3m2Dgl3o_n5_XAMPMyujDTq180Nco2fQQK8BS9tiZNMmAQAoFr8oSg0tXoeEXAMKac7rk53kMJimNPBfSt-Y0G6qJdlywZy008zKvJGxq_xZBnJQ)
 
@@ -20,7 +28,7 @@ by adding `ecspanse_state_machine` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:ecspanse_state_machine, "~> 0.3.0"}
+    {:ecspanse_state_machine, "~> 0.3.1"}
   ]
 end
 ```

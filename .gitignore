@@ -31,3 +31,4 @@ ecspanse_state_machine-*.tar
 doc/
 .DS_Store
 cspell.json
+cover/

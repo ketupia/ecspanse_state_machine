@@ -1,33 +1,33 @@
-defmodule MermaidTest do
-  use ExUnit.Case, async: false
-
+defmodule ApiMermaidTest do
   @moduledoc false
-
-  defmodule EcspanseTest do
-    @moduledoc false
-    use Ecspanse
-
-    @impl true
-    def setup(data) do
-      data
-    end
-  end
+  use ExUnit.Case
 
   setup do
     {:ok, _pid} = start_supervised({EcspanseTest, :test})
     Ecspanse.System.debug()
   end
 
+  describe "errors" do
+    test "not found - bogus entity_id" do
+      {:error, :not_found} = EcspanseStateMachine.format_as_mermaid_diagram("1234")
+    end
+
+    test "not found no state machine" do
+      entity = Examples.no_state_machine()
+      {:error, :not_found} = EcspanseStateMachine.format_as_mermaid_diagram(entity)
+    end
+  end
+
   describe "diagram source" do
     test "has diagram type" do
-      entity = Examples.simple_ai()
+      entity = Examples.simple_ai_no_auto_start()
       {:ok, mermaid} = EcspanseStateMachine.format_as_mermaid_diagram(entity.id)
       assert mermaid =~ "stateDiagram-v2"
       Ecspanse.Command.despawn_entity!(entity)
     end
 
     test "has title" do
-      entity = Examples.simple_ai()
+      entity = Examples.simple_ai_no_auto_start()
       {:ok, mermaid} = EcspanseStateMachine.format_as_mermaid_diagram(entity.id, "Simple AI")
       assert mermaid =~ "title"
       assert mermaid =~ "Simple AI"
@@ -45,9 +45,17 @@ defmodule MermaidTest do
       assert mermaid =~ "flashing_red --> red"
       Ecspanse.Command.despawn_entity!(entity)
     end
-  end
 
-  describe "traffic light with timer diagram source" do
+    test "start and exit states" do
+      entity = Examples.simple_ai_no_auto_start()
+
+      {:ok, mermaid} =
+        EcspanseStateMachine.format_as_mermaid_diagram(entity.id)
+
+      assert mermaid =~ "[*] --> idle"
+      assert mermaid =~ "die --> [*]"
+    end
+
     test "has timeout indicators" do
       entity = Examples.traffic_light_with_timeouts()
       {:ok, mermaid} = EcspanseStateMachine.format_as_mermaid_diagram(entity.id)
@@ -58,7 +66,7 @@ defmodule MermaidTest do
     end
   end
 
-  describe "game turn loop" do
+  describe "string state names" do
     test "has id block" do
       entity = Examples.mixed_state_names()
       {:ok, mermaid} = EcspanseStateMachine.format_as_mermaid_diagram(entity.id)

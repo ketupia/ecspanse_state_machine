@@ -7,20 +7,20 @@ defmodule EcspanseStateMachine.Internal.Projector do
   Returns a map of the state_machine to use in your projections
   """
   def project(%Components.StateMachine{} = state_machine) do
-    default_exit =
-      case state_machine.timing_state do
-        nil ->
-          nil
+    {time, default_exit} =
+      case state_machine.paused do
+        true ->
+          {0, nil}
 
         _ ->
-          Components.StateMachine.get_state_spec(state_machine, state_machine.timing_state)
-          |> StateSpec.default_exit()
+          {state_machine.time,
+           Components.StateMachine.get_state_spec(state_machine, state_machine.current_state)
+           |> StateSpec.default_exit()}
       end
 
     timer = %{
-      timing_state: state_machine.timing_state,
       paused: state_machine.paused,
-      time: state_machine.time,
+      time: time,
       duration: state_machine.duration,
       exits_to: default_exit
     }

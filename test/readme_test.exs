@@ -2,7 +2,7 @@ defmodule ReadmeTest do
   @moduledoc """
   Tests the readme contents
   """
-  use ExUnit.Case, async: false
+  use ExUnit.Case
 
   test "README install version check" do
     app = :ecspanse_state_machine

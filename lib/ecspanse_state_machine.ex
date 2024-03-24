@@ -2,42 +2,35 @@ defmodule EcspanseStateMachine do
   @moduledoc """
   ECSpanse State Machine Api
   """
+  alias EcspanseStateMachine.Internal
   alias EcspanseStateMachine.Components
-  alias EcspanseStateMachine.Internal.Engine
-  alias EcspanseStateMachine.Internal.Mermaid
-  alias EcspanseStateMachine.Internal.Projector
-  alias EcspanseStateMachine.Internal.Systems
   use EcspanseStateMachine.Types
 
-  @spec current_state(Ecspanse.Entity.id()) ::
-          {:ok, state_name()} | {:error, :not_found} | {:error, :not_running}
   @doc """
   Retrieves the current state of the state machine in the given entity if it is running.
   """
-  def current_state(entity_id) do
-    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
-         {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
-      Engine.current_state(state_machine)
+  @spec current_state(Ecspanse.Entity.id() | Ecspanse.Entity.t()) ::
+          {:ok, state_name()} | {:error, :not_found} | {:error, :not_running}
+  def current_state(entity_id_or_entity) do
+    with {:ok, state_machine} <- Internal.Query.fetch_state_machine(entity_id_or_entity) do
+      Internal.Engine.current_state(state_machine)
     end
   end
 
-  @spec format_as_mermaid_diagram(Ecspanse.Entity.id(), String.t()) ::
-          {:ok, String.t()} | {:error, :not_found}
   @doc """
   Generates the source for a [Mermaid State Diagram](https://mermaid.js.org)
 
   ## Parameters
     - title: The diagram will have this title (optional)
   """
-  def format_as_mermaid_diagram(entity_id, title \\ "") do
-    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
-         {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
-      Mermaid.as_state_diagram(state_machine, title)
+  @spec format_as_mermaid_diagram(Ecspanse.Entity.id() | Ecspanse.Entity.t(), String.t()) ::
+          {:ok, String.t()} | {:error, :not_found}
+  def format_as_mermaid_diagram(entity_id_or_entity, title \\ "") do
+    with {:ok, state_machine} <- Internal.Query.fetch_state_machine(entity_id_or_entity) do
+      Internal.Mermaid.as_state_diagram(state_machine, title)
     end
   end
 
-  @spec new(state_name(), list(Keyword.t()), Keyword.t()) ::
-          Ecspanse.Component.component_spec()
   @doc """
   Creates a [component_spec](https://hexdocs.pm/ecspanse/Ecspanse.Component.html#t:component_spec/0) for a State Machine
 
@@ -53,6 +46,8 @@ defmodule EcspanseStateMachine do
           [name: :yellow, exits: [:red]]
         ])
   """
+  @spec new(state_name(), list(Keyword.t()), Keyword.t()) ::
+          Ecspanse.Component.component_spec()
   def new(initial_state, states, opts \\ []) do
     {Components.StateMachine,
      [
@@ -65,10 +60,21 @@ defmodule EcspanseStateMachine do
   @doc """
   Returns a map of the state_machine to use in your [projections](https://hexdocs.pm/ecspanse/Ecspanse.Projection.html).
   """
-  def project(entity_id) when is_binary(entity_id) do
-    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
-         {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
-      Projector.project(state_machine)
+  @spec project(Ecspanse.Entity.id() | Ecspanse.Entity.t()) :: {:ok, map()} | {:error, :not_found}
+  def project(entity_id_or_entity) do
+    with {:ok, state_machine} <- Internal.Query.fetch_state_machine(entity_id_or_entity) do
+      Internal.Projector.project(state_machine)
+    end
+  end
+
+  @doc """
+  Returns true/false if the state machine is running
+  """
+  @spec running?(Ecspanse.Entity.id() | Ecspanse.Entity.t()) ::
+          {:ok, boolean()} | {:error, :not_found}
+  def running?(entity_id_or_entity) do
+    with {:ok, state_machine} <- Internal.Query.fetch_state_machine(entity_id_or_entity) do
+      {:ok, state_machine.is_running}
     end
   end
 
@@ -91,34 +97,32 @@ defmodule EcspanseStateMachine do
   @spec setup(Ecspanse.Data.t()) :: Ecspanse.Data.t()
   def setup(data) do
     data
-    |> Ecspanse.add_frame_start_system(Systems.AutoStarter)
-    |> Ecspanse.add_frame_start_system(Systems.OnStateTimeout)
+    |> Ecspanse.add_frame_start_system(Internal.Systems.AutoStarter)
+    |> Ecspanse.add_frame_start_system(Internal.Systems.OnStateTimeout)
   end
 
-  @spec start(Ecspanse.Entity.id()) :: :ok | {:error, :already_running} | {:error, :not_found}
   @doc """
   Starts the state machine
   """
-  def start(entity_id) do
-    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
-         {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
-      Engine.start(state_machine)
+  @spec start(Ecspanse.Entity.id() | Ecspanse.Entity.t()) ::
+          :ok | {:error, :already_running} | {:error, :not_found}
+  def start(entity_id_or_entity) do
+    with {:ok, state_machine} <- Internal.Query.fetch_state_machine(entity_id_or_entity) do
+      Internal.Engine.start(state_machine)
     end
   end
 
-  @spec stop(Ecspanse.Entity.id()) :: :ok | {:error, :not_running} | {:error, :not_found}
   @doc """
-  Stops a state machine
+  Stops the state machine
   """
-  def stop(entity_id) do
-    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
-         {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
-      Engine.stop(state_machine)
+  @spec stop(Ecspanse.Entity.id() | Ecspanse.Entity.t()) ::
+          :ok | {:error, :already_running} | {:error, :not_found}
+  def stop(entity_id_or_entity) do
+    with {:ok, state_machine} <- Internal.Query.fetch_state_machine(entity_id_or_entity) do
+      Internal.Engine.stop(state_machine)
     end
   end
 
-  @spec transition(Ecspanse.Entity.id(), state_name(), state_name(), any()) ::
-          :ok | {:error, :not_found}
   @doc """
   Triggers a state change
 
@@ -131,15 +135,14 @@ defmodule EcspanseStateMachine do
     - to: the state to transition to
     - trigger: the reason for the transition
   """
-  def transition(entity_id, from, to, trigger \\ :request) do
-    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
-         {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
-      Engine.transition(state_machine, from, to, trigger)
+  @spec transition(Ecspanse.Entity.id() | Ecspanse.Entity.t(), state_name(), state_name(), any()) ::
+          :ok | {:error, :not_found}
+  def transition(entity_id_or_entity, from, to, trigger \\ :request) do
+    with {:ok, state_machine} <- Internal.Query.fetch_state_machine(entity_id_or_entity) do
+      Internal.Engine.transition(state_machine, from, to, trigger)
     end
   end
 
-  @spec transition_to_default_exit(Ecspanse.Entity.id(), state_name(), any) ::
-          :ok | {:error, :not_found}
   @doc """
   Triggers a state change to the default exit
 
@@ -151,10 +154,11 @@ defmodule EcspanseStateMachine do
     - from: the state to transition from
     - trigger: the reason for the transition
   """
-  def transition_to_default_exit(entity_id, from, trigger \\ :request) do
-    with {:ok, entity} <- Ecspanse.Entity.fetch(entity_id),
-         {:ok, state_machine} <- Components.StateMachine.fetch(entity) do
-      Engine.transition_to_default_exit(state_machine, from, trigger)
+  @spec transition_to_default_exit(Ecspanse.Entity.id() | Ecspanse.Entity.t(), state_name(), any) ::
+          :ok | {:error, :not_found}
+  def transition_to_default_exit(entity_id_or_entity, from, trigger \\ :request) do
+    with {:ok, state_machine} <- Internal.Query.fetch_state_machine(entity_id_or_entity) do
+      Internal.Engine.transition_to_default_exit(state_machine, from, trigger)
     end
   end
 end
