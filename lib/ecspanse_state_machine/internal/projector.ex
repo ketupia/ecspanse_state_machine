@@ -30,7 +30,7 @@ defmodule EcspanseStateMachine.Internal.Projector do
        entity_id: Ecspanse.Query.get_component_entity(state_machine).id,
        initial_state: state_machine.initial_state,
        auto_start: state_machine.auto_start,
-       is_running: state_machine.is_running,
+       running?: state_machine.running?,
        current_state: state_machine.current_state,
        timer: timer
      }}

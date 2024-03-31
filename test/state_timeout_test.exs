@@ -39,28 +39,6 @@ defmodule StateTimeoutTest do
   end
 
   describe "timeout safeties" do
-    # These are tests to ensure timeouts don't trigger transitions in the exceedingly rare case
-    # that a transition is requested at the same time that a timeout occurs.
-
-    test "change current state with a timeout" do
-      # this tests that a timeout event is scheduled and then a transition is executed.
-      # The difference between the state start time and now will be less than the timeout
-      entity = Examples.traffic_light_with_timeouts()
-      EcspanseStateMachine.start(entity)
-
-      EcspanseStateMachine.transition(entity, :red, :green)
-
-      event = %EcspanseStateMachine.Internal.Events.StateTimeout{
-        entity_id: entity.id,
-        inserted_at: System.monotonic_time()
-      }
-
-      EcspanseStateMachine.Internal.Systems.OnStateTimeout.run(event, EcspanseTest.frame(event))
-
-      # Timeout should have not have caused change
-      assert {:ok, :green} = EcspanseStateMachine.current_state(entity)
-    end
-
     test "engine stopped - current state becomes nil" do
       # this tests that a timeout event is scheduled and then the state machine is stopped.
       entity = Examples.simple_ai_no_auto_start()

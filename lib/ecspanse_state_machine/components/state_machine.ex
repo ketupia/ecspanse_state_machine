@@ -19,7 +19,7 @@ defmodule EcspanseStateMachine.Components.StateMachine do
       :states,
       :telemetry_start_time,
       :telemetry_state_start_time,
-      is_running: false,
+      running?: false,
       duration: 5_000,
       time: 5_000,
       event: EcspanseStateMachine.Internal.Events.StateTimeout,
@@ -76,7 +76,8 @@ defmodule EcspanseStateMachine.Components.StateMachine do
       with :ok <- validate_state_specs(component.states),
            :ok <- validate_unique_state_names(state_names),
            :ok <- validate_initial_state_exists(state_names, component.initial_state),
-           :ok <- validate_exit_states_exist(state_names, component.states) do
+           :ok <- validate_exit_states_exist(state_names, component.states),
+           :ok <- validate_default_exits_exist(state_names, component.states) do
         validate_all_states_reachable(state_names, component.states, component.initial_state)
       end
     end
@@ -118,6 +119,26 @@ defmodule EcspanseStateMachine.Components.StateMachine do
       {:error, "#{Enum.join(unreached_states, ", ")} are not reachable from the starting state"}
     else
       :ok
+    end
+  end
+
+  defp validate_default_exits_exist(state_names, states) do
+    states_missing_default_exits =
+      Enum.filter(
+        states,
+        &(StateSpec.has_default_exit?(&1) &&
+            StateSpec.default_exit(&1) not in state_names)
+      )
+
+    if Enum.empty?(states_missing_default_exits) do
+      :ok
+    else
+      {:error,
+       Enum.map_join(
+         states_missing_default_exits,
+         ", ",
+         &"The default exit, #{inspect(StateSpec.default_exit(&1))},  from state #{inspect(StateSpec.name(&1))} does not exist"
+       )}
     end
   end
 

@@ -49,7 +49,7 @@ defmodule EcspanseStateMachine.Internal.Engine do
 
   @spec ensure_is_running(any()) :: :ok | {:error, :not_running}
   defp ensure_is_running(state_machine) do
-    if state_machine.is_running do
+    if state_machine.running? do
       :ok
     else
       {:error, :not_running}
@@ -58,7 +58,7 @@ defmodule EcspanseStateMachine.Internal.Engine do
 
   @spec ensure_is_not_running(any()) :: :ok | {:error, :already_running}
   defp ensure_is_not_running(state_machine) do
-    if state_machine.is_running do
+    if state_machine.running? do
       {:error, :already_running}
     else
       :ok
@@ -73,7 +73,7 @@ defmodule EcspanseStateMachine.Internal.Engine do
       changes = [
         auto_start: false,
         current_state: state_machine.initial_state,
-        is_running: true,
+        running?: true,
         telemetry_start_time: telemetry_start_time,
         telemetry_state_start_time: telemetry_start_time
       ]
@@ -117,7 +117,7 @@ defmodule EcspanseStateMachine.Internal.Engine do
       state = state_machine.current_state
 
       Ecspanse.Command.update_component!(state_machine,
-        is_running: false,
+        running?: false,
         current_state: nil,
         telemetry_start_time: 0,
         telemetry_state_start_time: 0,

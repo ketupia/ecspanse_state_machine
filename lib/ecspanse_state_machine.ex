@@ -74,7 +74,7 @@ defmodule EcspanseStateMachine do
           {:ok, boolean()} | {:error, :not_found}
   def running?(entity_id_or_entity) do
     with {:ok, state_machine} <- Internal.Query.fetch_state_machine(entity_id_or_entity) do
-      {:ok, state_machine.is_running}
+      {:ok, state_machine.running?}
     end
   end
 

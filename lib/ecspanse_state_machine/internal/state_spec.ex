@@ -11,6 +11,10 @@ defmodule EcspanseStateMachine.Internal.StateSpec do
   @spec has_timeout?(keyword()) :: boolean()
   def has_timeout?(state), do: timeout(state) != nil
 
+  @spec has_default_exit?(keyword()) :: boolean()
+  def has_default_exit?(state),
+    do: Keyword.has_key?(state, :default_exit) || length(exits(state)) > 0
+
   @spec has_exit?(keyword(), Types.state_name()) :: boolean()
   def has_exit?(state, to), do: to in exits(state)
 

@@ -22,7 +22,7 @@ defmodule ApiProjectTest do
     test "initial state not running" do
       entity = Examples.simple_ai_no_auto_start()
       {:ok, project} = EcspanseStateMachine.project(entity.id)
-      assert false == project.is_running
+      assert false == project.running?
       assert :idle == project.initial_state
       assert false == project.auto_start
       assert nil == project.current_state
@@ -34,7 +34,7 @@ defmodule ApiProjectTest do
       entity = Examples.traffic_light()
       EcspanseStateMachine.Internal.Systems.AutoStarter.run(EcspanseTest.frame())
       {:ok, project} = EcspanseStateMachine.project(entity.id)
-      assert true == project.is_running
+      assert true == project.running?
       assert :red == project.initial_state
       assert false == project.auto_start
       assert :red == project.current_state
@@ -47,7 +47,7 @@ defmodule ApiProjectTest do
 
       EcspanseStateMachine.Internal.Systems.AutoStarter.run(EcspanseTest.frame())
       {:ok, project} = EcspanseStateMachine.project(entity.id)
-      assert true == project.is_running
+      assert true == project.running?
       assert :red == project.initial_state
       assert false == project.auto_start
       assert :red == project.current_state
