@@ -13,7 +13,7 @@ defmodule EcspanseStateMachine.Internal.Engine do
   @doc """
   Retrieves the current state of the state machine in the given entity so long as it is running.
   """
-  @spec current_state(StateMachine.t()) :: {:ok, state_name()} | {:error, :not_running}
+  # @spec current_state(StateMachine.t()) :: {:ok, state_name()} | {:error, :not_running}
   def current_state(%StateMachine{} = state_machine) do
     with :ok <- ensure_is_running(state_machine) do
       {:ok, state_machine.current_state}

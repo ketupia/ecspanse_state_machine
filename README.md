@@ -28,7 +28,7 @@ by adding `ecspanse_state_machine` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:ecspanse_state_machine, "~> 0.3.2"}
+    {:ecspanse_state_machine, "~> 0.3.3"}
   ]
 end
 ```

@@ -15,13 +15,13 @@ defmodule EcspanseStateMachine.Internal.StateSpec do
   def has_default_exit?(state),
     do: Keyword.has_key?(state, :default_exit) || length(exits(state)) > 0
 
-  @spec has_exit?(keyword(), Types.state_name()) :: boolean()
+  @spec has_exit?(keyword(), state_name()) :: boolean()
   def has_exit?(state, to), do: to in exits(state)
 
-  @spec exits(keyword()) :: Types.list(state_name())
+  @spec exits(keyword()) :: list(state_name())
   def exits(state), do: Keyword.get(state, :exits, [])
 
-  @spec name(keyword()) :: Types.state_name() | nil
+  @spec name(keyword()) :: state_name() | nil
   def name(state), do: state[:name]
 
   @spec timeout(keyword()) :: pos_integer() | nil

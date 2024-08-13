@@ -32,3 +32,5 @@ doc/
 .DS_Store
 cspell.json
 cover/
+
+.publish
